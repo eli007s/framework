@@ -7,16 +7,16 @@
 		private static $_app;
 		private static $_config;
 		private static $_init   = null;
+		private static $_dirs   = array('config' => 'config', 'applications' => 'applications');
 		private static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function init()
 		{
 			if (is_null(self::$_init))
 			{
-				chdir(getcwd() . DS . 'applications');
-
 				self::_autoloadJinxup();
 				self::_parseFrameworkConfig();
+				self::_parseGlobalConfig();
 				self::_sessions();
 				self::_prepareURI();
 				self::_setApplication();
@@ -56,6 +56,11 @@
 		private static function _parseFrameworkConfig()
 		{
 			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(dirname(__DIR__) . DS . 'config'));
+		}
+
+		private static function _parseGlobalConfig()
+		{
+			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(dirname(dirname(__DIR__)) . DS . 'config'));
 		}
 
 		private static function _sessions()
@@ -142,27 +147,38 @@
 
 		private static function _setApplication()
 		{
-			$segments   = explode('.', $_SERVER['HTTP_HOST']);
-			$subDomains = array();
-			$activeApp  = null;
+			$activeApp = null;
+			$config    = self::$_config;
 
-			if (count($segments) >= 3)
+			if (isset($config['directories']['applications']))
 			{
+				if (is_dir(getcwd() . DS . $config['directories']['applications']))
+					self::$_dirs['applications'] = $config['directories']['applications'];
 
+				unset(self::$_config['directories']);
 			}
-			if ($segments[0] == 'services')
+
+			if (isset($config['domains']))
 			{
-				if (isset(self::$_routes['params'][0]))
-					$activeApp = array_shift(self::$_routes['params']);
-				
-				self::_prepareRoutes(self::$_routes['params']);
-				
+
+				unset(self::$_config['domains']);
+
 			} else {
 
-				$activeApp = !in_array($segments[0], $subDomains) ? 'dev' : $segments[0];
+				if (isset($config['active']))
+				{
+					$applications = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
+
+					if (array_key_exists($config['active'], $applications))
+						$activeApp = $config['active'];
+					else
+						self::_logExit('application');
+
+					unset(self::$_config['active']);
+				}
 			}
 
-			$app['path'] = $_SERVER['DOCUMENT_ROOT'] . '/applications/' . $activeApp;
+			$app['path'] = $_SERVER['DOCUMENT_ROOT'] . DS . self::$_dirs['applications'] . DS . $activeApp;
 			self::$_app  = $app;
 
 			if (is_dir($app['path']))
@@ -414,5 +430,55 @@
 			}
 
 			return JXP_Format::trimSpaces($_parameters);
+		}
+
+		private static function _logExit($errorType = null, $param1 = null)
+		{
+			Jinxup::$exit = true;
+
+			chdir(dirname(__DIR__));
+
+			$errorCode = 404;
+			$errorTpl  = null;
+			$errorPath = getcwd() . DS . 'views';
+
+			ob_start();
+
+			header('HTTP/1.0 404 Not Found');
+
+			$errorTpl = $errorType . '.tpl';
+
+			if ($errorCode == 404 || $errorCode == 500)
+			{
+				if (!empty(self::$_config['error']) && isset(self::$_config['error']['catch']))
+				{
+					if (isset(self::$_app['paths']['views']))
+					{
+						$errorPath = rtrim(self::$_app['paths']['views'], '/');
+
+						if (array_key_exists('*', self::$_config['error']['catch']) )
+							$errorTpl = trim(self::$_config['error']['catch']['*'], '/');
+
+						if (array_key_exists('all', self::$_config['error']['catch']) )
+							$errorTpl = trim(self::$_config['error']['catch']['all'], '/');
+
+						if (array_key_exists($errorCode, self::$_config['error']['catch']) )
+							$errorTpl = trim(self::$_config['error']['catch'][$errorCode], '/');
+					}
+
+				} else {
+
+					$errorPath = getcwd() . DS . 'views';
+				}
+
+				if (!file_exists($errorPath . '/' . $errorTpl))
+				{
+					$errorPath = getcwd() . DS . 'views';
+					$errorTpl  = $errorType . '.tpl';
+				}
+			}
+
+			JXP_View::setTplPath($errorPath);
+			JXP_View::render($errorTpl);
 		}
 	}

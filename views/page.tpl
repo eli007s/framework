@@ -4,9 +4,6 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 		<title>Jinxup 404</title>
-		<meta name="description" content="Missing is  a responsive 404 Page Template can be used for missing or broken links on your websites.">
-		<meta name="author" content="saptarang">
-		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 		<!--STYLESHEETS-->
 		<link href="/framework/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
@@ -35,18 +32,7 @@
 						<div class="col-md-5 col-sm-5">
 							<h3 class="brand"><a href="/" title="404">Jinxup</a></h3>
 						</div>
-						<div class="col-md-7 col-sm-7">
-							<ul class="list-inline text-right">
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Follow Us on Facebook"><i class="fa fa-facebook"></i></a></li>
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Follow Us on Twitter"><i class="fa fa-twitter"></i></a></li>
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Watch Our Videos"><i class="fa fa-youtube-play"></i></a></li>
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Follow Us On Pinterest"><i class="fa fa-pinterest-square"></i></a></li>
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Watch Our gallery"><i class="fa fa-flickr"></i></a></li>
-								<li><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Google Plus"><i class="fa fa-google-plus"></i></a></li>
-								<li class="last"><a class="tips" data-placement="bottom" data-toggle="tooltip" href="#" title="Instagram"><i class="fa fa-instagram"></i></a></li>
-							</ul>
-						</div>
-					</div><!--end-of-row-->
+					</div>
 				</header>
 
 				<article>
@@ -56,9 +42,6 @@
 								<h1>404</h1>
 								<h4>You stumbled upon a broken link :(</h4>
 								<br />
-								<p>
-									We've been notified and will work on fixing the issue!
-								</p>
 								<br />
 							</div>
 						</div>

@@ -2,6 +2,8 @@
 
 	class JXP_Directory
 	{
+		private static $_excludePattern = '\.DS_Store';
+
 		public static function scan($path, $pattern = null)
 		{
 			$directories = array();
@@ -14,16 +16,21 @@
 
 					if (($directory->isDir() && !$directory->isDot()) || $directory->isFile())
 					{
-						if (!is_null($pattern))
+						$base  = $directory->getBasename();
+
+						if (!preg_match('/' . self::$_excludePattern . '/im', $base))
 						{
-							$match = false;
+							if (!is_null($pattern))
+							{
+								$match = false;
 
-							if (preg_match('/' . $pattern . '/i', $directory->getBasename()))
-								$match = true;
+								if (preg_match('/' . $pattern . '/i', $base))
+									$match = true;
+							}
+
+							if ($match === true)
+								$directories[$directory->getBasename()] = $directory->getPathname();
 						}
-
-						if ($match === true)
-							$directories[$directory->getBasename()] = $directory->getPathname();
 					}
 				}
 			}
