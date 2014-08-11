@@ -87,7 +87,6 @@
 				self::$_smarty->assign('jxp', $_jxp);
 				self::$_smarty->setTemplateDir(self::$_tplPath);
 				self::$_smarty->setPluginsDir(self::$_tplPath . DS . 'plugins');
-				self::$_smarty->registerFilter('pre', array(new self(), 'templateInjection'));
 				self::$_smarty->registerResource('file', new RecompileFileResource());
 			}
 
@@ -111,71 +110,6 @@
 		public static function setFilterFlag($flag = true)
 		{
 			self::$_regFilter = $flag;
-		}
-		
-		public static function templateInjection($tpl_source)
-		{
-			//if (isset($_SESSION['user']))
-			//{
-				//$replace = '<div id="admin-debug-panel">testing</div></body>';
-				
-				//$tpl_source = preg_replace('/<\\/body>/im', $replace, $tpl_source);
-			//}
-
-			preg_match_all('/<form.*?name\\s*=\\s*"?([^\\s>"]*)/i', $tpl_source, $matches, PREG_PATTERN_ORDER);
-
-			if (!empty($matches[0]))
-				echo '<pre>', print_r($matches, true), '</pre>';
-			/*if (preg_match_all('/<form.*?name\\s*=\\s*"?([^\\s>"]*)/i', $tpl_source, $matches, PREG_PATTERN_ORDER))
-			{
-				$csfrName    = ;
-				$csfrToken   = null;
-				$hiddenInput = '<input type="hidden" name="CSFRName" value="' . $csfrName . '" /><input type="hidden" name="CSFRToken" value="' . $csfrToken . '" />';
-
-
-				$tpl_source = preg_replace('/<\\/body>/im', $hiddenInput, $tpl_source);
-			}*/
-
-			return $tpl_source;
-		}
-
-		public static function addPushCode($tpl_source)
-		{
-			$app    = self::_app();
-			$pushJS = null;
-			$uid    = isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : time();
-
-			if (isset($app['account_id']))
-			{
-				$pushJS = "
-<script type='text/javascript' src='//cdn.pubnub.com/pubnub.min.js'></script>
-<script type='text/javascript'>
-	var pubnub = PUBNUB.init({
-
-		windowing     : 1500,
-		publish_key   : 'pub-c-aca8b9bf-46bc-416a-950e-0a4cb65d7a71',
-		subscribe_key : 'sub-c-2e78c956-e9d3-11e3-92e7-02ee2ddab7fe',
-		uuid          : '{$uid}'
-	});
-
-	pubnub.subscribe({
-
-		channel : '{$app['app_id']}',
-		message: function (message, env, channel) {}
-	});
-</script>";
-			}
-
-			$pushJS .= '</body>';
-
-			return preg_replace('/<\\/body>/im', $pushJS, $tpl_source);
-		}
-
-		private static function _app()
-		{
-			$app = self::$_params['app'];
-
-			return $app;
 		}
 	}
 
