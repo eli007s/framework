@@ -7,7 +7,7 @@
 		public static function sHash($value, $algo = 'sha512', $salt = null)
 		{
 			$hash   = array();
-			$config = self::config('security');
+			$config = JXP_Config::get('security');
 
 			$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
 			$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
@@ -45,7 +45,7 @@
 		public static function hash($value, $algo = 'md5', $salt = 'secure')
 		{
 			$hash   = array();
-			$config = self::config('security');
+			$config = JXP_Config::get('security');
 
 			$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
 			$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
