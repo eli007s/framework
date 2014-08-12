@@ -174,7 +174,7 @@
 
 				} else {
 
-					if (isset($config['active']))
+					if (isset($config['active']) && !empty($config['active']))
 					{
 						if (array_key_exists($config['active'], $applications))
 							$activeApp = $config['active'];

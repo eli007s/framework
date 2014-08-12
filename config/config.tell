@@ -1,0 +1,6 @@
+/*
+ * This is where your global configuration settings are stored
+ */
+{
+	"active" : "" // If you have more than one application you can set your active application here
+}
