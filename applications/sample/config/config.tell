@@ -1,0 +1,8 @@
+{
+	"smarty" : {
+		"delimiters" : {
+			"left"  : "left",
+			"right" : "right"
+		}
+	}
+}
