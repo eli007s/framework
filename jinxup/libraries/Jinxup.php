@@ -158,23 +158,31 @@
 				unset(self::$_config['directories']);
 			}
 
-			if (isset($config['domains']))
-			{
+			$applications = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
 
-				unset(self::$_config['domains']);
+			if (count($applications) == 1)
+			{
+				$app       = array_keys($applications[0]);
+				$activeApp = $app[0];
 
 			} else {
 
-				if (isset($config['active']))
+				if (isset($config['domains']))
 				{
-					$applications = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
 
-					if (array_key_exists($config['active'], $applications))
-						$activeApp = $config['active'];
-					else
-						self::_logExit('application');
+					unset(self::$_config['domains']);
 
-					unset(self::$_config['active']);
+				} else {
+
+					if (isset($config['active']))
+					{
+						if (array_key_exists($config['active'], $applications))
+							$activeApp = $config['active'];
+						else
+							self::_logExit('application');
+
+						unset(self::$_config['active']);
+					}
 				}
 			}
 
