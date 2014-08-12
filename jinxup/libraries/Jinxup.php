@@ -162,7 +162,7 @@
 
 			if (count($applications) == 1)
 			{
-				$app       = array_keys($applications[0]);
+				$app       = array_keys($applications);
 				$activeApp = $app[0];
 
 			} else {
