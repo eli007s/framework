@@ -6,23 +6,23 @@
 		<title>Jinxup 404</title>
 
 		<!--STYLESHEETS-->
-		<link href="/framework/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
-		<link rel="stylesheet" href="/framework/assets/css/style.css" />
+		<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
+		<link rel="stylesheet" href="/jinxup/assets/css/style.css" />
 
 		<!--GOOGLE FONTS CODE-->
 		<link href='//fonts.googleapis.com/css?family=Nunito:400,300,700' rel='stylesheet' type='text/css'>
 		<link href='//fonts.googleapis.com/css?family=Muli:400,400italic' rel='stylesheet' type='text/css'>
-		<link href="/framework/assets/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+		<link href="/jinxup/assets/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 		<style type="text/css"></style>
 		<!--[if lt IE 9]>
 		<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
 
 		<!--FAVICON & APPLE ICONS-->
-		<link rel="shortcut icon" href="/framework/assets/img/icons/favicon.ico">
+		<link rel="shortcut icon" href="/jinxup/assets/img/icons/favicon.ico">
 
 		<!--SCRIPTS-->
-		<script type="text/javascript" src="/framework/assets/js/modernizr-1.0.min.js"></script>
+		<script type="text/javascript" src="/jinxup/assets/js/modernizr-1.0.min.js"></script>
 	</head>
 	<body>
 		<div class="container">
@@ -51,10 +51,10 @@
 		</div>
 
 		<!--SCRIPTS-->
-		<script src="/framework/assets/js/jquery.js"></script>
-		<script src="/framework/assets/js/bootstrap.min.js"></script>
-		<script src="/framework/assets/js/custom.js"></script>
-		<script src="/framework/assets/js/missing.js"></script>
-		<script src="/framework/assets/js/placeholders.js"></script>
+		<script src="/jinxup/assets/js/jquery.js"></script>
+		<script src="/jinxup/assets/js/bootstrap.min.js"></script>
+		<script src="/jinxup/assets/js/custom.js"></script>
+		<script src="/jinxup/assets/js/missing.js"></script>
+		<script src="/jinxup/assets/js/placeholders.js"></script>
 	</body>
 </html>
