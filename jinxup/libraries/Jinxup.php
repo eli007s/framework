@@ -182,6 +182,10 @@
 							self::_logExit('application');
 
 						unset(self::$_config['active']);
+
+					} else {
+
+						self::_logExit('active');
 					}
 				}
 			}
@@ -442,7 +446,7 @@
 
 		private static function _logExit($errorType = null, $param1 = null)
 		{
-			Jinxup::$exit = true;
+			self::$exit = true;
 
 			chdir(dirname(__DIR__));
 
