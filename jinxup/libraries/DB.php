@@ -73,7 +73,7 @@
 					$file    = '';
 					$port    = 3306;
 					$storage = '';
-					$driver  = 'PDO';
+					$driver  = 'MySQL';
 					$_alias  = null;
 					$_driver = null;
 
@@ -106,7 +106,7 @@
 
 							break;
 
-						case 'pdo':
+						case 'mysql':
 						default:
 
 							$_driver = "mysql:host=" . $host . ";port=" . $port . ";dbname=" . $name;

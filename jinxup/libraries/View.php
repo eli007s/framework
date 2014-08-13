@@ -31,7 +31,8 @@
 			} catch (Exception $e) {
 
 				$return = $e->getMessage();
-				echo '<pre>', print_r($return, true), '</pre>';
+
+				echo $return;
 			}
 
 			return $return;

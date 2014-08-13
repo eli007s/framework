@@ -160,43 +160,54 @@
 
 			$applications = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
 
-			if (count($applications) == 1)
+			if (empty($applications))
 			{
-				$app       = array_keys($applications);
-				$activeApp = $app[0];
+				self::_logExit('welcome');
 
 			} else {
 
-				if (isset($config['domains']))
+				if (count($applications) == 1)
 				{
-
-					unset(self::$_config['domains']);
+					$app       = array_keys($applications);
+					$activeApp = $app[0];
 
 				} else {
 
-					if (isset($config['active']) && !empty($config['active']))
+					if (isset($config['domains']))
 					{
-						if (array_key_exists($config['active'], $applications))
-							$activeApp = $config['active'];
-						else
-							self::_logExit('application');
 
-						unset(self::$_config['active']);
+						unset(self::$_config['domains']);
 
 					} else {
 
-						self::_logExit('active');
+						if (isset($config['active']) && !empty($config['active']))
+						{
+							if (array_key_exists($config['active'], $applications))
+								$activeApp = $config['active'];
+							else
+								self::_logExit('application');
+
+							unset(self::$_config['active']);
+
+						} else {
+
+							self::_logExit('active');
+						}
 					}
 				}
+
+				$app['path'] = $_SERVER['DOCUMENT_ROOT'] . DS . self::$_dirs['applications'] . DS . $activeApp;
+				self::$_app  = $app;
+
+				if (is_dir($app['path']))
+				{
+					chdir($app['path']);
+
+				} else {
+
+					self::_logExit('page');
+				}
 			}
-
-			$app['path'] = $_SERVER['DOCUMENT_ROOT'] . DS . self::$_dirs['applications'] . DS . $activeApp;
-			self::$_app  = $app;
-
-			if (is_dir($app['path']))
-				chdir($app['path']);
-			else
-				self::_logExit('page');
 		}
 
 		private static function _loadApplication()
@@ -483,7 +494,7 @@
 					$errorPath = getcwd() . DS . 'views';
 				}
 
-				if (!file_exists($errorPath . '/' . $errorTpl))
+				if (!file_exists($errorPath . '/' . $errorTpl) || $errorType == strtolower('system'))
 				{
 					$errorPath = getcwd() . DS . 'views';
 					$errorTpl  = $errorType . '.tpl';

@@ -2,5 +2,69 @@
  * This is where your global configuration settings are stored
  */
 {
-	"active" : "" // If you have more than one application you can set your active application here
+	"active" : "", // If you have more than one application you can set your active application here
+	"database" : {
+
+		"alias" : {
+
+			"host" : "", // DB Host
+			"name" : "", // DB Name
+			"user" : "", // DB User
+			"pass" : "", // DB Pass
+			"port" : "", // DB Port
+			"driver" : "", // DB Driver: MySQL, MSSQL, Sqlite,
+			"storage" : "" // Storage for Sqlite use only: Memory, File location
+		},
+
+		"alias2" : {
+
+			"use" :"alias_template" // Pulled from settings template database alias labeled "alias_template"
+		}
+	},
+	"error" : {
+
+		"catch" : { // User * to catch all errors, or 404, 500, etc to catch specific errors
+
+			"*" : "system" // location of error view or "system" for default error
+		}
+	},
+	"smarty" : { // Smarty template engine configuration settings
+
+		"delimiters" : {
+
+			"left" : "{!",
+			"right" : "!}"
+		},
+
+		"use" : "myDelimiters" // This will override the delimiter settings above
+	},
+
+	"settings" : { // Setting templates to be used in other setting
+
+		"database" : {
+
+			"alias_template" : {
+
+				"host" : "", // DB Host
+				"name" : "", // DB Name
+				"user" : "", // DB User
+				"pass" : "", // DB Pass
+				"port" : "", // DB Port
+				"driver" : "", // DB Driver: MySQL, MSSQL, Sqlite,
+				"storage" : "" // Storage for Sqlite use only: Memory, File location
+			}
+		},
+
+		"smarty" : {
+
+			"myDelimiters" : {
+
+				"delimiters" : {
+
+					"left" : "{!",
+					"right" : "!}"
+				}
+			}
+		}
+	}
 }
