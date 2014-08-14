@@ -201,7 +201,10 @@
 
 				if (is_dir($app['path']))
 				{
-					chdir($app['path']);
+					if (self::_checkApplicationIntegrity($app['path']))
+						chdir($app['path']);
+					else
+						self::_logExit('integrity');
 
 				} else {
 
@@ -494,7 +497,7 @@
 					$errorPath = getcwd() . DS . 'views';
 				}
 
-				if (!file_exists($errorPath . '/' . $errorTpl) || $errorType == strtolower('system'))
+				if (!file_exists($errorPath . '/' . $errorTpl) || $errorType == strtolower('default'))
 				{
 					$errorPath = getcwd() . DS . 'views';
 					$errorTpl  = $errorType . '.tpl';
@@ -503,5 +506,18 @@
 
 			JXP_View::setTplPath($errorPath);
 			JXP_View::render($errorTpl);
+		}
+
+		private static function _checkApplicationIntegrity($path)
+		{
+			$return = false;
+
+			if (!is_null($path))
+			{
+				foreach (array('controllers') as $k)
+					$return = (!is_dir($path . DS . $k)) ? false : true;
+			}
+
+			return $return;
 		}
 	}

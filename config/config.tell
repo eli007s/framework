@@ -25,7 +25,7 @@
 
 		"catch" : { // User * to catch all errors, or 404, 500, etc to catch specific errors
 
-			"*" : "system" // location of error view or "system" for default error
+			"*" : "default" // location of error view or "default" for default error
 		}
 	},
 	"smarty" : { // Smarty template engine configuration settings
