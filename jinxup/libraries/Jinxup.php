@@ -200,13 +200,9 @@
 				self::$_app  = $app;
 
 				if (is_dir($app['path']))
-				{
 					chdir($app['path']);
-
-				} else {
-
+				else
 					self::_logExit('page');
-				}
 			}
 		}
 
