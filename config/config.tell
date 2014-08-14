@@ -3,6 +3,7 @@
  */
 {
 	"active" : "", // If you have more than one application you can set your active application here
+	"environment" : "development", // Environment: production, development; used for error reporting
 	"database" : {
 
 		"alias" : {
