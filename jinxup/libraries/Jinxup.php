@@ -10,11 +10,15 @@
 		private static $_dirs   = array('config' => 'config', 'applications' => 'applications');
 		private static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
+		public function __construct()
+		{
+			self::_autoloadJinxup();
+		}
+
 		public function init()
 		{
 			if (is_null(self::$_init))
 			{
-				self::_autoloadJinxup();
 				self::_parseFrameworkConfig();
 				self::_parseGlobalConfig();
 				self::_sessions();
