@@ -8,9 +8,11 @@
 		private $_user   = null;
 		private $_pass   = null;
 		private $_hash   = null;
+		private $_alias  = null;
 
-		public function __construct($driver, $user = null, $pass = null)
+		public function __construct($alias, $driver, $user = null, $pass = null)
 		{
+			$this->_alias  = $alias;
 			$this->_driver = $driver;
 			$this->_user   = $user;
 			$this->_pass   = $pass;
