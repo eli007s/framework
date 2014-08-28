@@ -10,10 +10,10 @@ Taking a sample url
 
 http://mydomain.com/somepage/someaction/param1/param2
 
-Controller: somepage
-Action    : someaction
-Param1    : param1
-Param2    : param2
+- Controller: somepage
+- Action    : someaction
+- Param1    : param1
+- Param2    : param2
 
 To create a controller that will server content for the exmaple url, make a new file called "someaction.php" or "someaction_controller.php" or "csomeaction.php"
 
