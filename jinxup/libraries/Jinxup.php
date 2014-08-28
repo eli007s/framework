@@ -76,6 +76,46 @@
 
 		private static function _sessions()
 		{
+			if (isset(self::$_config['session']) && JXP_Tracker::getIP() != '127.0.0.1')
+			{
+				$cfgSess = self::$_config['session'];
+				$use     = isset($cfgSess['use']) ? $cfgSess['use'] : 'redis';
+				$handler = null;
+
+				if ($use == 'redis')
+				{
+					if (isset($cfgSess[$use]['host']))
+					{
+						require_once 'vendors' . DS . 'predis' . DS . 'Autoloader.php';
+
+						Predis\Autoloader::register();
+
+						$ttl  = isset($cfgSess[$use]['ttl']) ? $cfgSess[$use]['ttl'] : 3600;
+						$port = isset($cfgSess[$use]['port']) ? $cfgSess[$use]['port'] : 6973;
+
+						$client = new Predis\Client(array(
+							'scheme' => 'tcp',
+							'host'   => $cfgSess[$use]['host'],
+							'port'   => $port
+						));
+
+						$handler = new JXP_Session($client, 'JINXUP_', $ttl);
+					}
+				}
+
+				if (!is_null($handler))
+				{
+					session_set_save_handler(
+						array($handler, 'open'),
+						array($handler, 'close'),
+						array($handler, 'read'),
+						array($handler, 'write'),
+						array($handler, 'destroy'),
+						array($handler, 'gc')
+					);
+				}
+			}
+
 			session_start();
 		}
 
