@@ -21,7 +21,7 @@ someaction.php
 
 <?php
 
-	class SomeAction_Controller
+	class SomePage_Controller
 	{
 		public function someactionAction($userId = 0)
 		{
