@@ -74,12 +74,13 @@
 					//'active'     => self::getActiveApp(),
 					'action'     => self::getActionCall(),
 					'controller' => self::getController(),
-					'paths'      => self::getWebPaths(),
+					'path'       => self::getWebPaths(),
 					'param'      => self::getParams()
 				);
 
 				$_jxp = array(
 					'session' => isset($_SESSION) ? $_SESSION : array(),
+					'post'    => !empty($_POST) ? $_POST : array(),
 					'uri'     => array('getRequestURI' => self::getRequestURI()),
 					'tracker' => array('getIP' => JXP_Tracker::getIP())
 				);

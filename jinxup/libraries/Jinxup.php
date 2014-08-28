@@ -30,6 +30,13 @@
 			}
 		}
 
+		public static function path($dir)
+		{
+			$path = JXP_Directory::scan(dirname(__DIR__));
+
+			return is_dir ($path[$dir]) ? $path[$dir] : null;
+		}
+
 		public function getInit()
 		{
 			echo self::$_init;
@@ -307,7 +314,7 @@
 			if (!empty(self::$_app['paths']))
 			{
 				foreach (self::$_app['paths'] as $key => $val)
-					$paths[$key] = str_replace(DS, '/', str_replace(getcwd(), '', $val));
+					$paths[$key] = str_replace(DS, '/', str_replace(dirname(dirname(__DIR__)), '', $val));
 			}
 
 			return $paths;
@@ -322,7 +329,7 @@
 				$app = self::$_app['paths'];
 
 				if (isset($app[$key]))
-					$path = str_replace(DS, '/', str_replace(getcwd(), '', $app[$key]));
+					$path = str_replace(DS, '/', str_replace(dirname(dirname(__DIR__)), '', $app[$key]));
 			}
 
 			return $path;

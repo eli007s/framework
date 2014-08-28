@@ -1,0 +1,10 @@
+{
+	"smarty" : {
+
+		"delimiters" : {
+
+			"left"  : "{!",
+			"right" : "!}"
+		}
+	}
+}

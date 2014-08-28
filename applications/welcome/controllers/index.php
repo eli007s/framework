@@ -4,6 +4,6 @@
 	{
 		public function indexAction()
 		{
-			echo 'hello';
+			JXP_View::render('index.tpl');
 		}
 	}
