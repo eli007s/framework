@@ -114,6 +114,7 @@
 		{
 			$results = null;
 
+			$this->_log[$hash]['alias'] = $this->_alias;
 			$this->_log[$hash]['hash']  = $this->_hash;
 			$this->_log[$hash]['error'] = null;
 			$this->_log[$hash]['query'] = array('raw' => $query, 'prewiew' => $this->previewQuery($query, $bind));
