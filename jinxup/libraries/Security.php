@@ -2,8 +2,6 @@
 
 	class JXP_Security extends Jinxup
 	{
-		private static $_csfr = array();
-
 		public static function sHash($value, $algo = 'sha512', $salt = null)
 		{
 			$hash   = array();
@@ -110,11 +108,5 @@
 
 				return null;
 			}
-		}
-
-		public static function csrfCheck($key)
-		{
-			self::$_csfr['key']  = $key;
-			self::$_csfr['time'] = time();
 		}
 	}
