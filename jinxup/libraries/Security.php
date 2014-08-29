@@ -9,8 +9,11 @@
 			$hash   = array();
 			$config = JXP_Config::get('security');
 
-			$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
-			$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
+			if (!empty($config))
+			{
+				$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
+				$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
+			}
 
 			foreach (hash_algos() as $_algo)
 			{
@@ -42,13 +45,16 @@
 			return $hash;
 		}
 
-		public static function hash($value, $algo = 'md5', $salt = 'secure')
+		public static function hash($value, $algo = 'md5', $salt = null)
 		{
 			$hash   = array();
 			$config = JXP_Config::get('security');
 
-			$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
-			$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
+			if (!empty($config))
+			{
+				$algo = is_null($algo) ? isset($config['hash']) ? $config['hash'] : 'md5' : $algo;
+				$salt = is_null($salt) ? isset($config['salt']) ? $config['salt'] : null : $salt;
+			}
 
 			foreach (hash_algos() as $_algo)
 			{
