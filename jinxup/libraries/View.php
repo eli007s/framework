@@ -106,7 +106,26 @@
 		{
 			self::viewInit();
 
-			self::$_smarty->display(self::$_tplPath . DS . $tpl);
+			if (strpos($tpl, 'app::') !== false)
+			{
+				preg_match('/app::(.*):(.*)/im', $tpl, $matches);
+
+				if (count($matches) >= 3)
+				{
+					$tpl = $matches[2];
+
+					self::$_tplPath = dirname(dirname(realpath(self::$_tplPath))) . DS . $matches[1] . DS . 'views';
+				}
+			}
+
+			try {
+
+				self::$_smarty->display(self::$_tplPath . DS . $tpl);
+
+			} catch (SmartyException $e) {
+
+				self::_logExit('page');
+			}
 		}
 
 		public static function setFilterFlag($flag = true)

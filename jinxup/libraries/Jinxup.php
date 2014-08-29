@@ -522,9 +522,9 @@
 			return JXP_Format::trimSpaces($_parameters);
 		}
 
-		private static function _logExit($errorType = null, $param1 = null)
+		protected static function _logExit($errorType = null, $param1 = null)
 		{
-			self::$exit = true;
+			self::$_exit = true;
 
 			chdir(dirname(__DIR__));
 
