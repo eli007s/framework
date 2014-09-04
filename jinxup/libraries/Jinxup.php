@@ -524,7 +524,7 @@
 
 		protected static function _logExit($errorType = null, $param1 = null)
 		{
-			self::$_exit = true;
+			self::$exit = true;
 
 			chdir(dirname(__DIR__));
 
