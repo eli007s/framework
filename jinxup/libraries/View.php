@@ -71,11 +71,11 @@
 					self::$_smarty->right_delimiter = self::$_config['template']['delimiters']['right'];
 
 				$_app = array(
-					//'active'     => self::getActiveApp(),
-					'action'     => self::getActionCall(),
-					'controller' => self::getController(),
-					'path'       => self::getWebPaths(),
-					'param'      => self::getParams()
+					'active'     => JXP_Application::getActive(),
+					'action'     => JXP_Routes::getActionCall(),
+					'controller' => JXP_Routes::getController(),
+					'path'       => JXP_Application::getWebPaths(),
+					'param'      => JXP_Routes::getParams()
 				);
 
 				$_jxp = array(

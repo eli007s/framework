@@ -2,11 +2,11 @@
 
 	class Jinxup
 	{
-		public static $exit = false;
-
+		private static $_exit = false;
 		private static $_app;
 		private static $_config;
 		private static $_init   = null;
+		private static $_apps   = array();
 		private static $_dirs   = array('config' => 'config', 'applications' => 'applications');
 		private static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
@@ -23,6 +23,7 @@
 				self::_parseGlobalConfig();
 				self::_sessions();
 				self::_prepareURI();
+				self::_findApplications();
 				self::_setApplication();
 				self::_runRoutes();
 
@@ -196,6 +197,11 @@
 			self::$_routes['params'] = $params;
 		}
 
+		private static function _findApplications()
+		{
+			self::$_apps = JXP_Directory::scan(dirname(dirname(__DIR__)) . DS . self::$_dirs['applications']);
+		}
+
 		private static function _setApplication()
 		{
 			$activeApp = null;
@@ -231,29 +237,40 @@
 
 					} else {
 
-						if (isset($config['active']) && !empty($config['active']))
+						if (isset($config['applications']['active']) && !empty($config['applications']['active']))
 						{
-							if (array_key_exists($config['active'], $applications))
-								$activeApp = $config['active'];
+							if (array_key_exists($config['applications']['active'], self::$_apps))
+								$activeApp = $config['applications']['active'];
 							else
 								self::_logExit('application');
 
-							unset(self::$_config['active']);
-
-						} else {
-
-							self::_logExit('active');
+							unset(self::$_config['applications']['active']);
 						}
+
+						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
+						{
+							$activeApp = array_shift(self::$_routes['params']);
+
+							self::_prepareRoutes(self::$_routes['params']);
+						}
+
+						if (is_null($activeApp))
+							self::_logExit('active');
 					}
 				}
 
-				$app['path'] = $_SERVER['DOCUMENT_ROOT'] . DS . self::$_dirs['applications'] . DS . $activeApp;
+				$app['path'] = dirname(dirname(__DIR__)) . DS . self::$_dirs['applications'] . DS . $activeApp;
 				self::$_app  = $app;
 
-				if (self::$exit == false)
+				if (self::$_exit == false)
 				{
 					if (is_dir($app['path']))
 					{
+						JXP_Application::setActive($activeApp);
+						JXP_Application::setApp(self::$_app);
+						JXP_Application::setApps(self::$_apps);
+						JXP_Routes::setRoutes(self::$_routes);
+
 						if (self::_checkApplicationIntegrity($app['path']))
 							chdir($app['path']);
 						else
@@ -269,7 +286,7 @@
 
 		private static function _loadApplication()
 		{
-			if (self::$exit == false)
+			if (self::$_exit == false)
 			{
 				JXP_Autoloader::peekIn(getcwd());
 
@@ -350,184 +367,9 @@
 			return self::$_config;
 		}
 
-		public static function getWebPaths()
-		{
-			$paths = array();
-
-			if (!empty(self::$_app['paths']))
-			{
-				foreach (self::$_app['paths'] as $key => $val)
-					$paths[$key] = str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
-			}
-
-			return $paths;
-		}
-
-		public static function getWebPath($key)
-		{
-			$path = null;
-
-			if (!empty(self::$_app['paths']))
-			{
-				$app = self::$_app['paths'];
-
-				if (isset($app[$key]))
-					$path = str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
-			}
-
-			return $path;
-		}
-
-		/**
-		 * Directly alter invoked controller
-		 *
-		 * @param $controller
-		 */
-		public static function setController($controller)
-		{
-			self::$_routes['controller'] = $controller;
-		}
-
-		/**
-		 * Directly alter invoked call action
-		 *
-		 * @param $action
-		 */
-		public static function setAction($action)
-		{
-			self::$_routes['action'] = $action;
-		}
-
-		/**
-		 * @return mixed
-		 */
-		public static function getDomain()
-		{
-			return parse_url(getenv('SERVER_NAME'), PHP_URL_PATH);
-		}
-
-		/**
-		 * @return array
-		 */
-		public static function getRoutes()
-		{
-			return self::$_routes;
-		}
-
-		public static function getActive()
-		{
-			return self::$_app['active'];
-		}
-
-		/**
-		 * @param int $depth
-		 * @return string
-		 */
-		public static function getSubdomain($depth = 0)
-		{
-			$subdomain = explode('.', rawurldecode(parse_url(getenv('HTTP_HOST'), PHP_URL_PATH)));
-
-			return isset($subdomain[$depth]) ? $subdomain[$depth] : null;
-		}
-
-		/**
-		 * @return string
-		 */
-		public static function getRequestURI()
-		{
-			$request = rawurldecode(trim(parse_url(getenv('REQUEST_URI'), PHP_URL_PATH), '/'));
-
-			return $request;
-		}
-
-		/**
-		 * @param bool $friendly
-		 * @return string
-		 */
-		public static function getController($friendly = false)
-		{
-			return $friendly === true ? self::$_routes['controller'] : str_replace('_Controller', '', self::$_routes['controller']);
-		}
-
-		/**
-		 * @param bool $friendly
-		 * @return string
-		 */
-		public static function getModel($friendly = false)
-		{
-			return $friendly === true ? self::$_routes['controller'] . '_Model' : self::getController();
-		}
-
-		/**
-		 * @param bool $friendly
-		 * @return string
-		 */
-		public static function getActionCall($friendly = false)
-		{
-			return $friendly === true ? self::$_routes['action'] : str_replace('Action', '', self::$_routes['action']);
-		}
-
-		/**
-		 * @return array
-		 */
-		public static function getParams()
-		{
-			return self::$_routes['params'];
-		}
-
-		/**
-		 * @return int
-		 */
-		public static function getParamCount()
-		{
-			return count(self::$_routes['params']);
-		}
-
-		/**
-		 * @param $name
-		 * @param int $count
-		 */
-		public static function addParam($name, $count = 1)
-		{
-			for ($i = 0; $i < $count; $i++)
-				self::$_routes['params'][] = $name;
-		}
-
-		/***
-		 * @param $params
-		 * @return array|string
-		 */
-		public static function assocParams($params = array())
-		{
-			$parameters  = empty($params) ? self::getParams() : $params;
-			$_parameters = array();
-
-			if (count($parameters) > 1)
-			{
-				$i = 0;
-
-				while (!empty($parameters))
-				{
-					if (isset($parameters[$i]))
-					{
-						$_parameters[$parameters[$i]] = $parameters[$i + 1] ?: null;
-
-						unset($parameters[$i]);
-
-						if (isset($parameters[$i + 1]))
-							unset($parameters[$i + 1]);
-
-						$i += 2;
-					}
-				}
-			}
-
-			return JXP_Format::trimSpaces($_parameters);
-		}
-
 		protected static function _logExit($errorType = null, $param1 = null)
 		{
-			self::$exit = true;
+			self::$_exit = true;
 
 			chdir(dirname(__DIR__));
 
@@ -543,20 +385,20 @@
 
 			if ($errorCode == 404 || $errorCode == 500)
 			{
-				if (!empty(self::$_config['error']) && isset(self::$_config['error']['catch']))
+				if (!empty(self::$_config['errors']) && isset(self::$_config['errors']['catch']))
 				{
 					if (isset(self::$_app['paths']['views']))
 					{
 						$errorPath = rtrim(self::$_app['paths']['views'], '/');
 
-						if (array_key_exists('*', self::$_config['error']['catch']) )
-							$errorTpl = trim(self::$_config['error']['catch']['*'], '/');
+						if (array_key_exists('*', self::$_config['errors']['catch']) )
+							$errorTpl = trim(self::$_config['errors']['catch']['*'], '/');
 
-						if (array_key_exists('all', self::$_config['error']['catch']) )
-							$errorTpl = trim(self::$_config['error']['catch']['all'], '/');
+						if (array_key_exists('all', self::$_config['errors']['catch']) )
+							$errorTpl = trim(self::$_config['errors']['catch']['all'], '/');
 
-						if (array_key_exists($errorCode, self::$_config['error']['catch']) )
-							$errorTpl = trim(self::$_config['error']['catch'][$errorCode], '/');
+						if (array_key_exists($errorCode, self::$_config['errors']['catch']) )
+							$errorTpl = trim(self::$_config['errors']['catch'][$errorCode], '/');
 					}
 
 				} else {
