@@ -250,16 +250,19 @@
 				$app['path'] = $_SERVER['DOCUMENT_ROOT'] . DS . self::$_dirs['applications'] . DS . $activeApp;
 				self::$_app  = $app;
 
-				if (is_dir($app['path']))
+				if (self::$exit == false)
 				{
-					if (self::_checkApplicationIntegrity($app['path']))
-						chdir($app['path']);
-					else
-						self::_logExit('integrity');
+					if (is_dir($app['path']))
+					{
+						if (self::_checkApplicationIntegrity($app['path']))
+							chdir($app['path']);
+						else
+							self::_logExit('integrity');
 
-				} else {
+					} else {
 
-					self::_logExit('page');
+						self::_logExit('page');
+					}
 				}
 			}
 		}
