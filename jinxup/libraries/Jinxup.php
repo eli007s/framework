@@ -122,7 +122,7 @@
 
 		private static function _prepareURI()
 		{
-			self::$_routes['params'] = explode('/', self::getRequestURI());
+			self::$_routes['params'] = explode('/', JXP_Routes::getRequestURI());
 
 			return self::$_routes['params'];
 		}
@@ -194,6 +194,8 @@
 				}
 			}
 
+			JXP_Routes::setRoutes(self::$_routes);
+
 			self::$_routes['params'] = $params;
 		}
 
@@ -215,17 +217,15 @@
 				unset(self::$_config['directories']);
 			}
 
-			$applications = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
-
-			if (empty($applications))
+			if (empty(self::$_apps))
 			{
 				self::_logExit('welcome');
 
 			} else {
 
-				if (count($applications) == 1)
+				if (count(self::$_apps) == 1)
 				{
-					$app       = array_keys($applications);
+					$app       = array_keys(self::$_apps);
 					$activeApp = $app[0];
 
 				} else {
@@ -262,15 +262,13 @@
 				$app['path'] = dirname(dirname(__DIR__)) . DS . self::$_dirs['applications'] . DS . $activeApp;
 				self::$_app  = $app;
 
+				JXP_Application::setActive($activeApp);
+				JXP_Application::setApps(self::$_apps);
+
 				if (self::$_exit == false)
 				{
 					if (is_dir($app['path']))
 					{
-						JXP_Application::setActive($activeApp);
-						JXP_Application::setApp(self::$_app);
-						JXP_Application::setApps(self::$_apps);
-						JXP_Routes::setRoutes(self::$_routes);
-
 						if (self::_checkApplicationIntegrity($app['path']))
 							chdir($app['path']);
 						else
@@ -291,6 +289,8 @@
 				JXP_Autoloader::peekIn(getcwd());
 
 				self::$_app['paths'] = JXP_Directory::scan(getcwd());
+
+				JXP_Application::setApp(self::$_app);
 
 				if (isset(self::$_app['paths']['config']))
 					self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
