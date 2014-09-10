@@ -194,9 +194,9 @@
 				}
 			}
 
-			JXP_Routes::setRoutes(self::$_routes);
-
 			self::$_routes['params'] = $params;
+
+			JXP_Routes::setRoutes(self::$_routes);
 		}
 
 		private static function _findApplications()
