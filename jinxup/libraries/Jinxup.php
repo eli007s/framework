@@ -413,6 +413,7 @@
 				}
 			}
 
+			JXP_Application::setApps(self::$_apps);
 			JXP_View::setTplPath($errorPath);
 			JXP_View::render($errorTpl);
 		}
