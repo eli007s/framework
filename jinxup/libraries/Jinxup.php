@@ -248,11 +248,7 @@
 						}
 
 						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
-						{
 							$activeApp = array_shift(self::$_routes['params']);
-
-							self::_prepareRoutes(self::$_routes['params']);
-						}
 
 						if (is_null($activeApp))
 							self::_logExit('active');
