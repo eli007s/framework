@@ -87,8 +87,8 @@
 
 				self::$_smarty->assign('app', $_app);
 				self::$_smarty->assign('jxp', $_jxp);
-				self::$_smarty->setTemplateDir(self::$_tplPath);
-				self::$_smarty->setPluginsDir(self::$_tplPath . DS . 'plugins');
+				self::$_smarty->addTemplateDir(self::$_tplPath);
+				self::$_smarty->addPluginsDir(self::$_tplPath . DS . 'plugins');
 				self::$_smarty->registerResource('file', new RecompileFileResource());
 			}
 
