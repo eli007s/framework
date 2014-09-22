@@ -45,6 +45,14 @@
 					{
 						$_class = explode('_', $class);
 
+						if (count($_class) > 2)
+						{
+							$_type = array_pop($_class);
+
+							$_class[0] = implode('_', $_class);
+							$_class[1] = $_type;
+						}
+
 						if (isset($_class[1]))
 						{
 							$path = self::$_paths[1] . DS . strtolower($_class[1]) . 's';
@@ -52,15 +60,7 @@
 
 						} else {
 
-							$file = null;
-
-							if ($_class[0] == 'onLoad')
-							{
-
-							} else {
-
-								$file = self::search($class, $_class, __DIR__);
-							}
+							$file = self::search($class, $_class, __DIR__);
 						}
 					}
 				}
