@@ -3,60 +3,77 @@
 	class JXP_Cache_Redis
 	{
 		private static $_redis = null;
+		private static $_mode  = null;
 
 		public static function init()
 		{
 			if (is_null(self::$_redis))
 			{
-				$cfg = Jinxup::config('session');
-				$use = $cfg['use'] ?: 'redis';
-				$cfg = $cfg[$use] ?: array();
+				$cfg = JXP_Config::get('cache');
+				$cfg = isset($cfg['redis']) ? $cfg['redis'] : array();
+
+				self::$_mode = isset($cfg['mode']) ? $cfg['mode'] : 'production';
 
 				if (isset($cfg['host']))
 				{
-					if ($use == 'redis')
+					$ip = JXP_Tracker::getIP();
+
+					if ($ip != '::1' && $ip != '127.0.0.1' && self::$_mode == 'production')
 					{
-						require_once 'vendors' . DS . 'predis' . DS . 'Autoloader.php';
+						require_once dirname(__DIR__) . DS . 'vendors' . DS . 'predis' . DS . 'Autoloader.php';
 
 						Predis\Autoloader::register();
-
-						$ttl  = $cfg['ttl'] ?: 3600;
-						$port = $cfg['port'] ?: 6973;
 
 						self::$_redis = new Predis\Client(array(
 							'scheme' => 'tcp',
 							'host'   => $cfg['host'],
-							'port'   => $port
+							'port'   => isset($cfg['port']) ? $cfg['port'] : 6973
 						));
 					}
 				}
 			}
 
-			return self::$_redis;
+			return new self();
 		}
 
 		public static function getKey($key)
 		{
-			$redis = self::init();
-			$value = $redis->get($key);
+			self::init();
+
+			$return = null;
+
+			if (!is_null(self::$_redis))
+			{
+				$value = self::$_redis->get($key);
 			$json  = json_decode($value, true);
 
-			return json_last_error() == JSON_ERROR_NONE ? $json : $value;
+				$return = json_last_error() == JSON_ERROR_NONE ? $json : $value;
+			}
+
+			return $return;
 		}
 
 		public static function setKey($key, $value)
 		{
-			$redis = self::init();
+			self::init();
 
+			$return = null;
+
+			if (!is_null(self::$_redis))
+			{
 			$value = is_array($value) ? json_encode($value) : $value;
 
-			return $redis->set($key, $value);
+				$return = self::$_redis->set($key, $value);
+			}
+
+			return $return;
 		}
 
 		public static function delKey($key)
 		{
-			$redis = self::init();
+			self::init();
 
-			$redis->del($key);
+			if (!is_null(self::$_redis))
+				self::$_redis->del($key);
 		}
 	}

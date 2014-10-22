@@ -16,6 +16,16 @@
 			return self::$_active;
 		}
 
+		public static function getPaths()
+		{
+			return self::$_app['paths'];
+		}
+
+		public static function getPath($path)
+		{
+			return isset(self::$_app['paths'][$path]) ? self::$_app['paths'][$path] : null;
+		}
+
 		public static function setApp($app = array())
 		{
 			self::$_app = $app;

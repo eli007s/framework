@@ -30,7 +30,7 @@
 				'Smarty_Internal_CompileBase'
 			);
 
-			if (!preg_match('/(Predis|Aws|Guzzle)\\\\/i', $class) && !in_array($class, $skip))
+			if (!preg_match('/(Predis|Aws|Guzzle|Stripe|Ups)\\\\/i', $class) && !in_array($class, $skip))
 			{
 				$file = null;
 

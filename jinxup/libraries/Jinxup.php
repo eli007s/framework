@@ -7,7 +7,7 @@
 		private static $_config;
 		private static $_init   = null;
 		private static $_apps   = array();
-		private static $_dirs   = array('config' => 'config', 'applications' => 'applications');
+		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
 		private static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
@@ -122,7 +122,7 @@
 
 		private static function _prepareURI()
 		{
-			self::$_routes['params'] = explode('/', JXP_Routes::getRequestURI());
+			self::$_routes['params'] = explode('/', JXP_Routes::getURI());
 
 			return self::$_routes['params'];
 		}
@@ -232,7 +232,6 @@
 
 					if (isset($config['domains']))
 					{
-
 						unset(self::$_config['domains']);
 
 					} else {
@@ -287,6 +286,9 @@
 				self::$_app['paths'] = JXP_Directory::scan(getcwd());
 
 				JXP_Application::setApp(self::$_app);
+
+				if (isset(self::$_app['paths']['views']))
+					JXP_View::setTplPath(self::$_app['paths']['views']);
 
 				if (isset(self::$_app['paths']['config']))
 					self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
@@ -363,7 +365,7 @@
 			return self::$_config;
 		}
 
-		protected static function _logExit($errorType = null, $param1 = null)
+		protected static function _logExit($errorType = null)
 		{
 			self::$_exit = true;
 
@@ -409,9 +411,14 @@
 				}
 			}
 
-			JXP_Application::setApps(self::$_apps);
-			JXP_View::setTplPath($errorPath);
-			JXP_View::render($errorTpl);
+			if (is_dir($errorPath))
+			{
+				JXP_Application::setApps(self::$_apps);
+				JXP_View::setTplPath($errorPath);
+
+				JXP_View::render($errorTpl);
+			}
+			exit;
 		}
 
 		private static function _checkApplicationIntegrity($path)

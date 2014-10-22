@@ -51,7 +51,7 @@
 			return isset($subdomain[$depth]) ? $subdomain[$depth] : null;
 		}
 
-		public static function getRequestURI()
+		public static function getURI()
 		{
 			$request = rawurldecode(trim(parse_url(getenv('REQUEST_URI'), PHP_URL_PATH), '/'));
 
@@ -60,12 +60,12 @@
 
 		public static function getParamCount()
 		{
-			return count(self::$_routes['params']);
+			return isset(self::$_routes['params']) ? count(self::$_routes['params']) : 0;
 		}
 
 		public static function getParams()
 		{
-			return self::$_routes['params'];
+			return isset(self::$_routes['params']) ? self::$_routes['params'] : array();
 		}
 
 		public static function addParam($name, $count = 1)

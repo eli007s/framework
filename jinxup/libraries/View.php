@@ -16,6 +16,9 @@
 
 			try
 			{
+				if (count($params) == 0)
+					$return = self::$_smarty->{$name}();
+
 				if (count($params) == 1)
 					$return = self::$_smarty->{$name}($params[0]);
 
@@ -31,8 +34,6 @@
 			} catch (Exception $e) {
 
 				$return = $e->getMessage();
-
-				echo $return;
 			}
 
 			return $return;
@@ -57,10 +58,8 @@
 			{
 				require_once(dirname(__DIR__) . DS . 'engines' . DS . 'smarty' . DS . 'Smarty.class.php');
 
-				self::$_smarty = new Smarty();
-
-				self::$_params['app'] = self::getApp();
-
+				self::$_smarty                  = new Smarty();
+				self::$_params['app']           = self::getApp();
 				self::$_smarty->left_delimiter  = '{!';
 				self::$_smarty->right_delimiter = '!}';
 
@@ -72,16 +71,17 @@
 
 				$_app = array(
 					'active'     => JXP_Application::getActive(),
-					'action'     => JXP_Routes::getActionCall(),
 					'controller' => JXP_Routes::getController(),
+					'action'     => JXP_Routes::getActionCall(),
 					'path'       => JXP_Application::getWebPaths(),
 					'param'      => JXP_Routes::getParams()
 				);
 
 				$_jxp = array(
+					'assets'  => '/jinxup/framework/assets',
 					'session' => isset($_SESSION) ? $_SESSION : array(),
 					'post'    => !empty($_POST) ? $_POST : array(),
-					'uri'     => array('getRequestURI' => self::getRequestURI()),
+					'routes'  => array('getURI' => '/' . JXP_Routes::getURI()),
 					'tracker' => array('getIP' => JXP_Tracker::getIP())
 				);
 
@@ -99,11 +99,13 @@
 		{
 			self::viewInit();
 
-			self::$_smarty->assign($key, $val);
+				self::$_smarty->assign($key, $val);
 		}
 
 		public static function render($tpl)
 		{
+			try
+			{
 			self::viewInit();
 
 			if (strpos($tpl, 'app::') !== false)
@@ -116,13 +118,23 @@
 
 					self::$_tplPath = dirname(dirname(realpath(self::$_tplPath))) . DS . $matches[1] . DS . 'views';
 				}
-			}
 
-			try {
+				} else {
+
+					if (strpos($tpl, 'jinxup:') !== false) {
+						preg_match('/jinxup:{1,}(.*)/im', $tpl, $matches);
+
+						$tpl = $matches[1];
+
+						self::$_tplPath = dirname(__DIR__) . DS . 'views' . DS . 'shared';
+					}
+			}
 
 				self::$_smarty->display(self::$_tplPath . DS . $tpl);
 
 			} catch (SmartyException $e) {
+
+				//echo $e->getMessage();
 
 				self::_logExit('page');
 			}

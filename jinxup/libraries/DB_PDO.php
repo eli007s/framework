@@ -9,6 +9,7 @@
 		private $_pass   = null;
 		private $_hash   = null;
 		private $_alias  = null;
+		private $_fetchMode = PDO::FETCH_ASSOC;
 
 		public function __construct($alias, $driver, $user = null, $pass = null)
 		{
@@ -33,6 +34,25 @@
 					$this->_log['connection'] = $e;
 				}
 			}
+		}
+
+		public function getDSN()
+		{
+			return $this->_driver;
+		}
+
+		public function setFetchMode($mode = 'assoc')
+		{
+			$mode = strtolower($mode);
+
+			if ($mode == 'assoc')
+				$this->_fetchMode = PDO::FETCH_ASSOC;
+			else if ($mode == 'object')
+				$this->_fetchMode = PDO::FETCH_OBJ;
+			else
+				$this->_fetchMode = PDO::FETCH_ASSOC;
+
+			return $this;
 		}
 
 		public function getObj()
@@ -112,12 +132,17 @@
 
 		private function _runQuery($query, $bind, $hash)
 		{
+			$debug    = debug_backtrace();
 			$results = null;
+			$starTime = microtime(true);
+			$endTime  = 0;
 
-			$this->_log[$hash]['alias'] = $this->_alias;
-			$this->_log[$hash]['hash']  = $this->_hash;
-			$this->_log[$hash]['error'] = null;
-			$this->_log[$hash]['query'] = array('raw' => $query, 'prewiew' => $this->previewQuery($query, $bind));
+			$log['alias']  = $this->_alias;
+			$log['hash']   = $this->_hash;
+			$log['error']  = null;
+			$log['time']   = 0;
+			$log['caller'] = array('file' => $debug[3]['file'], 'line' => $debug[3]['line'], 'class' => $debug[4]['class'], 'function' => $debug[4]['function']);
+			$log['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
 
 			try
 			{
@@ -127,7 +152,7 @@
 
 					if (count($bind) > 0)
 					{
-						$this->_log[$hash]['tokens']['total'] = count($bind);
+						$log['tokens']['total'] = count($bind);
 
 						preg_match_all("/(?<=\:)\w*/i", $query, $params);
 
@@ -149,26 +174,36 @@
 						if (preg_match('/^insert/im', $query))
 							$results = $this->_con->lastInsertId();
 					
+						$endTime = microtime(true);
+
 					} else {
 						
-						$this->_log[$hash]['error']['message'] = 'There was an error executing your query';
+						$log['error']['message'] = 'There was an error executing your query';
 					}
 
 				}  else {
 
-					$this->_log[$hash]['error']['message'] = $this->_log['connection']->getMessage();
+					$log['error']['message'] = $this->_log['connection']->getMessage();
 				}
 
 			} catch (PDOException $e) {
 				
+				$endTime = microtime(true);
 				$debug = debug_backtrace();
 
-				$this->_log[$hash]['error'] = array(
+				$log['error'] = array(
 					'file'    => $debug[2]['file'],
 					'line'    => $debug[2]['line'],
 					'message' => $e->getMessage()
 				);
 			}
+
+			$log['time'] = $endTime - $starTime;
+
+			$this->_log[$hash] = $log;
+
+			if (is_null($log['error']))
+				unset($this->_log[$hash]['error']);
 
 			return is_null($results) ? array() : $results;
 		}
@@ -216,8 +251,7 @@
 
 						$this->_log[$hash]['tokens']['bound'][] = $arr;
 
-						if (!is_null($param))
-							$stmt->bindValue(":{$value}", $bind[$value], $param);
+						$stmt->bindValue(":{$value}", $bind[$value], $param);
 
 					} else {
 
