@@ -73,7 +73,7 @@
 					'active'     => JXP_Application::getActive(),
 					'controller' => JXP_Routes::getController(),
 					'action'     => JXP_Routes::getActionCall(),
-					'path'       => JXP_Application::getWebPaths(),
+					'assets'     => JXP_Application::getWebPath('assets'),
 					'param'      => JXP_Routes::getParams()
 				);
 

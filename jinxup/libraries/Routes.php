@@ -3,6 +3,7 @@
 	class JXP_Routes
 	{
 		public static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
+		public static $prefix = null;
 
 		public static function setRoutes($routes = array())
 		{
@@ -53,7 +54,12 @@
 
 		public static function getURI()
 		{
-			$request = rawurldecode(trim(parse_url(getenv('REQUEST_URI'), PHP_URL_PATH), '/'));
+			$uri     = str_replace('index.php', '', $_SERVER['PHP_SELF']);
+
+			self::$prefix = rtrim($uri, '/');
+
+			$uri     = str_replace($uri, '', getenv('REQUEST_URI'));
+			$request = rawurldecode(trim(parse_url($uri, PHP_URL_PATH), '/'));
 
 			return $request;
 		}

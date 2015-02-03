@@ -2,13 +2,13 @@
 
 	class JXP_DB_PDO
 	{
-		private $_con    = null;
-		private $_log    = array();
-		private $_driver = null;
-		private $_user   = null;
-		private $_pass   = null;
-		private $_hash   = null;
-		private $_alias  = null;
+		private $_con       = null;
+		private $_log       = array();
+		private $_driver    = null;
+		private $_user      = null;
+		private $_pass      = null;
+		private $_hash      = null;
+		private $_alias     = null;
 		private $_fetchMode = PDO::FETCH_ASSOC;
 
 		public function __construct($alias, $driver, $user = null, $pass = null)
@@ -65,11 +65,18 @@
 			return md5($query . json_encode($bind));
 		}
 
-		public function getLog($hash = null)
+		public function results($hash = null)
 		{
 			$hash = is_null($hash) ? $this->_hash : $hash;
 
-			return !empty($this->_log[$hash]) ? $this->_log[$hash] : array();
+			return isset($this->_log[$hash]['results']) ? $this->_log[$hash]['results'] : array();
+		}
+
+		public function log($hash = null)
+		{
+			$hash = is_null($hash) ? $this->_hash : $hash;
+
+			return !empty($this->_log[$hash]['log']) ? $this->_log[$hash]['log'] : array();
 		}
 
 		public function clearLog($hash = null)
@@ -133,7 +140,24 @@
 		private function _runQuery($query, $bind, $hash)
 		{
 			$debug    = debug_backtrace();
-			$results = null;
+
+			if ($debug[3]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 1;
+				$callerIdx['line']     = 2;
+				$callerIdx['class']    = 2;
+				$callerIdx['function'] = 2;
+			}
+
+			if ($debug[5]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 3;
+				$callerIdx['line']     = 4;
+				$callerIdx['class']    = 4;
+				$callerIdx['function'] = 4;
+			}
+
+			$results  = null;
 			$starTime = microtime(true);
 			$endTime  = 0;
 
@@ -141,7 +165,12 @@
 			$log['hash']   = $this->_hash;
 			$log['error']  = null;
 			$log['time']   = 0;
-			$log['caller'] = array('file' => $debug[3]['file'], 'line' => $debug[3]['line'], 'class' => $debug[4]['class'], 'function' => $debug[4]['function']);
+			$log['caller'] = array(
+				'file'     => $debug[$callerIdx['file']]['file'],
+				'line'     => $debug[$callerIdx['line']]['line'],
+				'class'    => $debug[$callerIdx['class']]['class'],
+				'function' => $debug[$callerIdx['function']]['function']
+			);
 			$log['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
 
 			try
@@ -154,7 +183,7 @@
 					{
 						$log['tokens']['total'] = count($bind);
 
-						preg_match_all("/(?<=\:)\w*/i", $query, $params);
+						preg_match_all("/(?<=\:)\w*/im", $query, $params);
 
 						$params = array_map('array_values', array_map('array_filter', $params));
 
@@ -205,7 +234,12 @@
 			if (is_null($log['error']))
 				unset($this->_log[$hash]['error']);
 
-			return is_null($results) ? array() : $results;
+			$log['log']     = $log;
+			$log['results'] = $results;
+
+			$this->_log[$hash] = $log;
+
+			return $this;
 		}
 
 		private function _prepareParameters($stmt, $bind, $params, $hash)

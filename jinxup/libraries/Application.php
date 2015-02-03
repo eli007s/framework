@@ -53,7 +53,7 @@
 			if (!empty(self::$_app['paths']))
 			{
 				foreach (self::$_app['paths'] as $key => $val)
-					$paths[$key] = str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
+					$paths[$key] = JXP_Routes::$prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
 			}
 
 			return $paths;
@@ -68,7 +68,7 @@
 				$app = self::$_app['paths'];
 
 				if (isset($app[$key]))
-					$path = str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
+					$path = JXP_Routes::$prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
 			}
 
 			return $path;

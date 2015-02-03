@@ -236,14 +236,14 @@
 
 					} else {
 
-						if (isset($config['applications']['active']) && !empty($config['applications']['active']))
+						if (isset($config['active']) && !empty($config['active']))
 						{
-							if (array_key_exists($config['applications']['active'], self::$_apps))
-								$activeApp = $config['applications']['active'];
+							if (array_key_exists($config['active'], self::$_apps))
+								$activeApp = $config['active'];
 							else
 								self::_logExit('application');
 
-							unset(self::$_config['applications']['active']);
+							unset(self::$_config['active']);
 						}
 
 						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
@@ -418,6 +418,7 @@
 
 				JXP_View::render($errorTpl);
 			}
+
 			exit;
 		}
 

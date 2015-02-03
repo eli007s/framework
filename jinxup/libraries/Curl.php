@@ -17,16 +17,16 @@
 				self::$_error    = 0;
 				self::$_response = null;
 
-				$opt[CURLOPT_URL]            = $url;
-				$opt[CURLOPT_RETURNTRANSFER] = 1;
-				$opt[CURLOPT_FOLLOWLOCATION] = 1;
-				$opt[CURLOPT_AUTOREFERER]    = 1;
-				$opt[CURLOPT_CONNECTTIMEOUT] = 120;
-				$opt[CURLOPT_TIMEOUT]        = 120;
-				$opt[CURLOPT_MAXREDIRS]      = 10;
-				$opt[CURLOPT_SSL_VERIFYHOST] = 0;
-				$opt[CURLOPT_SSL_VERIFYPEER] = 0;
-				$opt[CURLOPT_VERBOSE]        = 1;
+				$opt['CURLOPT_URL']            = $url;
+				$opt['CURLOPT_RETURNTRANSFER'] = 1;
+				$opt['CURLOPT_FOLLOWLOCATION'] = 1;
+				$opt['CURLOPT_AUTOREFERER']    = 1;
+				$opt['CURLOPT_CONNECTTIMEOUT'] = 120;
+				$opt['CURLOPT_TIMEOUT']        = 120;
+				$opt['CURLOPT_MAXREDIRS']      = 10;
+				$opt['CURLOPT_SSL_VERIFYHOST'] = 0;
+				$opt['CURLOPT_SSL_VERIFYPEER'] = 0;
+				$opt['CURLOPT_VERBOSE']        = 1;
 
 				self::$_opt = $opt;
 
@@ -55,8 +55,8 @@
 			$post = JXP_Format::trimSpaces($post);
 			$post = is_array($post) ? http_build_query($post) : urlencode($post);
 
-			self::$_opt[CURLOPT_POST]       = 1;
-			self::$_opt[CURLOPT_POSTFIELDS] = $post;
+			self::$_opt['CURLOPT_POST']       = 1;
+			self::$_opt['CURLOPT_POSTFIELDS'] = $post;
 
 			return self::$_init;
 		}
@@ -76,7 +76,7 @@
 			if (is_array($opt) && !empty($opt))
 				self::$_opt = array_merge(self::$_opt, $opt);
 			else
-				self::$_opt[(string)$opt] = $value;
+				self::$_opt[(string) $opt] = $value;
 
 			return self::$_init;
 		}
@@ -87,14 +87,15 @@
 			{
 				$ch = curl_init();
 
-				curl_setopt_array($ch, self::$_opt);
+				foreach (self::$_opt as $key => $val)
+					curl_setopt($ch, constant($key), $val);
 
 				self::$_response = curl_exec($ch);
 				self::$_error    = curl_errno($ch);
 
 				curl_close($ch);
 
-				return self::$_response;
+				return strlen(self::$_response) == 0 && self::$_error > 0 ? self::_errorCode(self::$_error) : self::$_response;
 
 			} else {
 

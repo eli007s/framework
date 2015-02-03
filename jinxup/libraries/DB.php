@@ -51,6 +51,11 @@
 			return self::ignite($alias, $fuel);
 		}
 
+		public static function using($alias)
+		{
+			return self::ignite($alias);
+		}
+
 		/**
 		 * @param string $alias
 		 * @param array $fuel

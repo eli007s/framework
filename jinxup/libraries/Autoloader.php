@@ -22,22 +22,20 @@
 
 		public static function autoload($class)
 		{
-			$skip = array(
-				'Smarty_Config',
-				'Smarty_Internal_TemplateCompilerBase',
-				'Smarty_Internal_Templatelexer',
-				'Smarty_Internal_Templateparser',
-				'Smarty_Internal_CompileBase'
-			);
+			$file = null;
 
-			if (!preg_match('/(Predis|Aws|Guzzle|Stripe|Ups)\\\\/i', $class) && !in_array($class, $skip))
+			if (strpos($class, 'JXP_') !== false)
 			{
-				$file = null;
+				$class = str_replace('JXP_', '', $class) . '.php';
+				$file  = self::$_paths[0] . DS . $class;
 
-				if (strpos($class, 'JXP_') !== false)
+			} else {
+
+				if (strpos($class, '\\') !== false)
 				{
-					$class = str_replace('JXP_', '', $class) . '.php';
-					$file  = self::$_paths[0] . DS . $class;
+					$namespace = explode('\\', $class);
+					$_class[0] = array_pop($namespace);
+					$path      = implode('\\', $namespace);
 
 				} else {
 
@@ -52,22 +50,16 @@
 							$_class[0] = implode('_', $_class);
 							$_class[1] = $_type;
 						}
-
-						if (isset($_class[1]))
-						{
-							$path = self::$_paths[1] . DS . strtolower($_class[1]) . 's';
-							$file = self::search($class, $_class, $path);
-
-						} else {
-
-							$file = self::search($class, $_class, __DIR__);
-						}
 					}
+
+					$path = isset($_class[1]) ? self::$_paths[1] . DS . strtolower($_class[1]) . 's' : __DIR__;
 				}
 
-				if (!is_null($file) && file_exists($file))
-					require_once($file);
+				$file = self::search($class, $_class, $path);
 			}
+
+			if (!is_null($file) && file_exists($file))
+				require_once($file);
 		}
 
 		private static function search($class, $_class, $path)
@@ -85,7 +77,7 @@
 				{
 					if ($dir->isFile())
 					{
-						preg_match('/(' . $_class[0] . ')/i', $dir->getBasename(), $match);
+						preg_match('#(' . str_replace('\\', '\\\\', $_class[0]) . ')#i', $dir->getBasename(), $match);
 
 						$match = array_filter($match);
 
