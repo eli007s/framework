@@ -13,11 +13,20 @@
 			return self::$_init;
 		}
 
-		public static function peekIn($paths)
+		public static function peekIn($paths, $alias = null)
 		{
-			self::$_paths[] = $paths;
+			if (!is_null($alias))
+				self::$_paths[$alias] = $paths;
+			else
+				self::$_paths[] = $paths;
 
 			return self::_init();
+		}
+		
+		public static function removeFromPath($key)
+		{
+			if (array_key_exists($key, self::$_paths))
+				unset(self::$_paths[$key]);
 		}
 
 		public static function autoload($class)
@@ -39,7 +48,9 @@
 
 				} else {
 
-					if (isset(self::$_paths[1]))
+					$pathKeys = array_keys(self::$_paths);
+
+					if (isset(self::$_paths[$pathKeys[1]]))
 					{
 						$_class = explode('_', $class);
 
@@ -52,7 +63,7 @@
 						}
 					}
 
-					$path = isset($_class[1]) ? self::$_paths[1] . DS . strtolower($_class[1]) . 's' : __DIR__;
+					$path = isset($_class[1]) ? self::$_paths[$pathKeys[1]] . DS . strtolower($_class[1]) . 's' : __DIR__;
 				}
 
 				$file = self::search($class, $_class, $path);

@@ -2,17 +2,18 @@
 
 	class Jinxup
 	{
-		private static $_exit = false;
 		private static $_app;
 		private static $_config;
-		private static $_init   = null;
-		private static $_apps   = array();
-		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
-		private static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
+		private static $_exit       = false;
+		private static $_init       = null;
+		private static $_apps       = array();
+		private static $_loadedApps = array();
+		private static $_dirs       = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
+		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
 		{
-			self::_autoloadJinxup();
+			self::_autoload();
 		}
 
 		public function init()
@@ -30,12 +31,38 @@
 				self::$_init = 'loaded';
 			}
 		}
+		
+		public static function load($app)
+		{
+			if (!in_array($app, self::$_loadedApps))
+			{
+				if (array_key_exists($app, self::$_apps))
+				{
+					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
+
+					self::_setApplication($app);
+					self::_autoload();
+					self::_runRoutes();
+
+				} else {
+
+					self::_logExit('application');
+				}
+
+				exit;
+			}
+		}
+		
+		public static function stop()
+		{
+			exit;
+		}
 
 		public static function path($dir)
 		{
 			$path = JXP_Directory::scan(dirname(__DIR__));
 
-			return is_dir ($path[$dir]) ? $path[$dir] : null;
+			return is_dir($path[$dir]) ? $path[$dir] : null;
 		}
 
 		public function getInit()
@@ -48,9 +75,11 @@
 			return self::$_app;
 		}
 
-		private static function _autoloadJinxup()
+		private static function _autoload()
 		{
 			$autoloaderPath = __DIR__ . DS . 'Autoloader.php';
+
+			spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
 
 			if (!file_exists($autoloaderPath))
 				exit('Missing autoloader');
@@ -72,7 +101,7 @@
 
 		private static function _parseGlobalConfig()
 		{
-			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(dirname(dirname(__DIR__)) . DS . 'config'));
+			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(getcwd() . DS . 'config'));
 		}
 
 		private static function _sessions()
@@ -148,8 +177,7 @@
 
 			} else {
 
-				if (!empty($params[0]) && strtolower($params[0]) == 'index.php')
-					$params[0] = 'index';
+				$params = preg_replace('/\.php/im', '', $params);
 
 				self::_prepareRoutes($params);
 				self::_loadApplication();
@@ -201,12 +229,13 @@
 
 		private static function _findApplications()
 		{
-			self::$_apps = JXP_Directory::scan(dirname(dirname(__DIR__)) . DS . self::$_dirs['applications']);
+			self::$_apps = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
 		}
 
-		private static function _setApplication()
+		private static function _setApplication($forceApp = null)
 		{
 			$activeApp = null;
+			$app       = array();
 			$config    = self::$_config;
 
 			if (isset($config['directories']['applications']))
@@ -219,7 +248,7 @@
 
 			if (empty(self::$_apps))
 			{
-				self::_logExit('welcome');
+				self::_logExit('welcome',242);
 
 			} else {
 
@@ -232,6 +261,8 @@
 
 					if (isset($config['domains']))
 					{
+						// TODO: set activeApp from domain settings
+						
 						unset(self::$_config['domains']);
 
 					} else {
@@ -241,7 +272,7 @@
 							if (array_key_exists($config['active'], self::$_apps))
 								$activeApp = $config['active'];
 							else
-								self::_logExit('application');
+								self::_logExit('application',266);
 
 							unset(self::$_config['active']);
 						}
@@ -249,13 +280,21 @@
 						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
 							$activeApp = array_shift(self::$_routes['params']);
 
+						if (!is_null($forceApp))
+						{
+							chdir(dirname(dirname(self::$_app['path'])));
+							
+							$activeApp = $forceApp;
+						}
+
 						if (is_null($activeApp))
-							self::_logExit('active');
+							self::_logExit('active',282);
 					}
 				}
 
-				$app['path'] = dirname(dirname(__DIR__)) . DS . self::$_dirs['applications'] . DS . $activeApp;
-				self::$_app  = $app;
+				$app['path']         = getcwd() . DS . self::$_dirs['applications'] . DS . $activeApp;
+				self::$_app          = $app;
+				self::$_loadedApps[] = $activeApp;
 
 				JXP_Application::setActive($activeApp);
 				JXP_Application::setApps(self::$_apps);
@@ -265,13 +304,42 @@
 					if (is_dir($app['path']))
 					{
 						if (self::_checkApplicationIntegrity($app['path']))
+						{
 							chdir($app['path']);
-						else
-							self::_logExit('integrity');
+
+							self::$_app['paths'] = JXP_Directory::scan(getcwd());
+
+							JXP_Application::setApp(self::$_app);
+
+							if (isset(self::$_app['paths']['views']))
+								JXP_View::setTplPath(self::$_app['paths']['views']);
+
+							if (isset(self::$_app['paths']['config']))
+								self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
+
+							JXP_Autoloader::peekIn(getcwd(), JXP_Application::getActive());
+
+							if (isset(self::$_config['environment']))
+							{
+								if (self::$_config['environment'] == 'development')
+								{
+									error_reporting(E_ALL);
+									ini_set('display_errors', 1);
+									ini_set('auto_detect_line_endings', 1);
+									set_time_limit(0);
+								}
+
+								unset(self::$_config['environment']);
+							}
+
+						} else {
+
+							self::_logExit('integrity',328);
+						}
 
 					} else {
 
-						self::_logExit('page');
+						self::_logExit('page',333);
 					}
 				}
 			}
@@ -281,34 +349,9 @@
 		{
 			if (self::$_exit == false)
 			{
-				JXP_Autoloader::peekIn(getcwd());
-
-				self::$_app['paths'] = JXP_Directory::scan(getcwd());
-
-				JXP_Application::setApp(self::$_app);
-
-				if (isset(self::$_app['paths']['views']))
-					JXP_View::setTplPath(self::$_app['paths']['views']);
-
-				if (isset(self::$_app['paths']['config']))
-					self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
-
 				$return    = null;
 				$bootstrap = null;
 				$routes    = self::$_routes;
-
-				if (isset(self::$_config['environment']))
-				{
-					if (self::$_config['environment'] == 'development')
-					{
-						error_reporting(E_ALL);
-						ini_set('display_errors', 1);
-						ini_set('auto_detect_line_endings', 1);
-						set_time_limit(0);
-					}
-
-					unset(self::$_config['environment']);
-				}
 
 				if (class_exists('Bootstrap_Controller'))
 				{
@@ -342,12 +385,12 @@
 
 					} else {
 
-						self::_logExit('page');
+						self::_logExit('page',380);
 					}
 
 				} else {
 
-					self::_logExit('page');
+					self::_logExit('page',385);
 				}
 
 				if (!is_null($bootstrap) && is_callable(array($bootstrap, 'onDestruct')))
@@ -365,8 +408,8 @@
 			return self::$_config;
 		}
 
-		protected static function _logExit($errorType = null)
-		{
+		protected static function _logExit($errorType = null,$line=0)
+		{echo $line;
 			self::$_exit = true;
 
 			chdir(dirname(__DIR__));

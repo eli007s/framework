@@ -48,12 +48,13 @@
 
 		public static function getWebPaths()
 		{
-			$paths = array();
+			$paths  = array();
+			$prefix = str_replace('//', '/', JXP_Routes::$prefix);
 
 			if (!empty(self::$_app['paths']))
 			{
 				foreach (self::$_app['paths'] as $key => $val)
-					$paths[$key] = JXP_Routes::$prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
+					$paths[$key] = $prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
 			}
 
 			return $paths;
@@ -65,10 +66,11 @@
 
 			if (!empty(self::$_app['paths']))
 			{
-				$app = self::$_app['paths'];
+				$app    = self::$_app['paths'];
+				$prefix = str_replace('//', '/', JXP_Routes::$prefix);
 
 				if (isset($app[$key]))
-					$path = JXP_Routes::$prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
+					$path = $prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
 			}
 
 			return $path;

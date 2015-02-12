@@ -99,43 +99,43 @@
 		{
 			self::viewInit();
 
-				self::$_smarty->assign($key, $val);
+			self::$_smarty->assign($key, $val);
 		}
 
 		public static function render($tpl)
 		{
 			try
 			{
-			self::viewInit();
+				self::viewInit();
 
-			if (strpos($tpl, 'app::') !== false)
-			{
-				preg_match('/app::(.*):(.*)/im', $tpl, $matches);
-
-				if (count($matches) >= 3)
+				if (strpos($tpl, 'app::') !== false)
 				{
-					$tpl = $matches[2];
+					preg_match('/app::(.*):(.*)/im', $tpl, $matches);
 
-					self::$_tplPath = dirname(dirname(realpath(self::$_tplPath))) . DS . $matches[1] . DS . 'views';
-				}
+					if (count($matches) >= 3)
+					{
+						$tpl = $matches[2];
+
+						self::$_tplPath = dirname(dirname(realpath(self::$_tplPath))) . DS . $matches[1] . DS . 'views';
+					}
 
 				} else {
 
-					if (strpos($tpl, 'jinxup:') !== false) {
+					if (strpos($tpl, 'jinxup:') !== false)
+					{
 						preg_match('/jinxup:{1,}(.*)/im', $tpl, $matches);
 
 						$tpl = $matches[1];
 
 						self::$_tplPath = dirname(__DIR__) . DS . 'views' . DS . 'shared';
 					}
-			}
+				}
 
 				self::$_smarty->display(self::$_tplPath . DS . $tpl);
 
 			} catch (SmartyException $e) {
 
-				//echo $e->getMessage();
-
+				self::set('error', $e->getMessage());
 				self::_logExit('page');
 			}
 		}

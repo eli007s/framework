@@ -3,7 +3,7 @@
 	class JXP_Routes
 	{
 		public static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
-		public static $prefix = null;
+		public static $prefix  = null;
 
 		public static function setRoutes($routes = array())
 		{
@@ -47,14 +47,14 @@
 
 		public static function getSubdomain($depth = 0)
 		{
-			$subdomain = explode('.', rawurldecode(parse_url(getenv('HTTP_HOST'), PHP_URL_PATH)));
+			$subdomain = explode('.', rawurldecode(getenv('HTTP_HOST')));
 
 			return isset($subdomain[$depth]) ? $subdomain[$depth] : null;
 		}
 
 		public static function getURI()
 		{
-			$uri     = str_replace('index.php', '', $_SERVER['PHP_SELF']);
+			$uri = str_replace('index.php', '', getenv('PHP_SELF'));
 
 			self::$prefix = rtrim($uri, '/');
 
@@ -93,7 +93,7 @@
 				{
 					if (isset($parameters[$i]))
 					{
-						$_parameters[$parameters[$i]] = $parameters[$i + 1] ?: null;
+						$_parameters[$parameters[$i]] = isset($parameters[$i + 1]) ? $parameters[$i + 1] : null;
 
 						unset($parameters[$i]);
 

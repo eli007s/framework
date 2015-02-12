@@ -139,7 +139,7 @@
 
 		private function _runQuery($query, $bind, $hash)
 		{
-			$debug    = debug_backtrace();
+			$debug = debug_backtrace();
 
 			if ($debug[3]['function'] == '_loadApplication')
 			{
@@ -153,6 +153,22 @@
 			{
 				$callerIdx['file']     = 3;
 				$callerIdx['line']     = 4;
+				$callerIdx['class']    = 4;
+				$callerIdx['function'] = 4;
+			}
+
+			if ($debug[6]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 3;
+				$callerIdx['line']     = 3;
+				$callerIdx['class']    = 4;
+				$callerIdx['function'] = 4;
+			}
+
+			if ($debug[8]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 3;
+				$callerIdx['line']     = 3;
 				$callerIdx['class']    = 4;
 				$callerIdx['function'] = 4;
 			}
@@ -183,7 +199,7 @@
 					{
 						$log['tokens']['total'] = count($bind);
 
-						preg_match_all("/(?<=\:)\w*/im", $query, $params);
+						preg_match_all('/(?<=\:)\w*/im', $query, $params);
 
 						$params = array_map('array_values', array_map('array_filter', $params));
 
@@ -239,7 +255,7 @@
 
 			$this->_log[$hash] = $log;
 
-			return $this;
+			return $results;
 		}
 
 		private function _prepareParameters($stmt, $bind, $params, $hash)
