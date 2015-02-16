@@ -409,7 +409,7 @@
 		}
 
 		protected static function _logExit($errorType = null,$line=0)
-		{echo $line;
+		{
 			self::$_exit = true;
 
 			chdir(dirname(__DIR__));
