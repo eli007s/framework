@@ -140,7 +140,7 @@
 		private function _runQuery($query, $bind, $hash)
 		{
 			$debug = debug_backtrace();
-
+//echo '<pre>', print_r($debug, true), '</pre>';
 			if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 1;
@@ -163,6 +163,14 @@
 				$callerIdx['line']     = 3;
 				$callerIdx['class']    = 4;
 				$callerIdx['function'] = 4;
+			}
+
+			if (isset($debug[7]) && $debug[7]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 4;
+				$callerIdx['line']     = 4;
+				$callerIdx['class']    = 6;
+				$callerIdx['function'] = 5;
 			}
 
 			if (isset($debug[8]) && $debug[8]['function'] == '_loadApplication')
