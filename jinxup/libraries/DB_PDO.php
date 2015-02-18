@@ -141,7 +141,7 @@
 		{
 			$debug = debug_backtrace();
 
-			if ($debug[3]['function'] == '_loadApplication')
+			if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 1;
 				$callerIdx['line']     = 2;
@@ -149,7 +149,7 @@
 				$callerIdx['function'] = 2;
 			}
 
-			if ($debug[5]['function'] == '_loadApplication')
+			if (isset($debug[5]) && $debug[5]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 3;
 				$callerIdx['line']     = 4;
@@ -157,7 +157,7 @@
 				$callerIdx['function'] = 4;
 			}
 
-			if ($debug[6]['function'] == '_loadApplication')
+			if (isset($debug[6]) && $debug[6]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 3;
 				$callerIdx['line']     = 3;
@@ -165,7 +165,7 @@
 				$callerIdx['function'] = 4;
 			}
 
-			if ($debug[8]['function'] == '_loadApplication')
+			if (isset($debug[8]) && $debug[8]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 3;
 				$callerIdx['line']     = 3;
@@ -173,10 +173,18 @@
 				$callerIdx['function'] = 4;
 			}
 
-			if ($debug[9]['function'] == '_loadApplication')
+			if (isset($debug[9]) && $debug[9]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 5;
 				$callerIdx['line']     = 5;
+				$callerIdx['class']    = 6;
+				$callerIdx['function'] = 6;
+			}
+
+			if (isset($debug[11]) && $debug[11]['function'] == '_loadApplication')
+			{
+				$callerIdx['file']     = 8;
+				$callerIdx['line']     = 8;
 				$callerIdx['class']    = 6;
 				$callerIdx['function'] = 6;
 			}
