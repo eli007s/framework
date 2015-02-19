@@ -135,8 +135,18 @@
 
 			} catch (SmartyException $e) {
 
-				self::set('error', $e->getMessage());
-				self::_logExit('page');
+				$error   = $e->getMessage();
+				$message = array();
+
+				if (preg_match('/Syntax error in template/im', $error, $match))
+				{
+					self::set('error', $e->getMessage());
+					self::_logExit('template_syntax');
+
+				} else {
+
+					echo $e->getMessage();
+				}
 			}
 		}
 
