@@ -13,6 +13,9 @@
 
 		public function __construct()
 		{
+			if (!defined('DS'))
+				define('DS', DIRECTORY_SEPARATOR);
+
 			self::_autoload();
 		}
 
@@ -78,7 +81,7 @@
 		private static function _autoload()
 		{
 			$autoloaderPath = __DIR__ . DS . 'Autoloader.php';
-echo $autoloaderPath;
+
 			spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
 
 			if (!file_exists($autoloaderPath))
