@@ -1,5 +1,5 @@
 <?php
-echo 'here';exit;
+
 	/**
 	 * Apply a global timezone, timezones are handled by the application settings
 	 */
