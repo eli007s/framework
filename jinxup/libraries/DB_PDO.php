@@ -111,7 +111,7 @@
 					}
 				}
 
-				$query = preg_replace($keys, $values, $query, 1, $count);
+				$query = preg_replace($keys, $values, $query);
 			}
 
 			return $query;
