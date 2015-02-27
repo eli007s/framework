@@ -140,7 +140,7 @@
 		private function _runQuery($query, $bind, $hash)
 		{
 			$debug = debug_backtrace();
-//echo '<pre>', print_r($debug, true), '</pre>';
+
 			if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 1;
@@ -201,17 +201,17 @@
 			$starTime = microtime(true);
 			$endTime  = 0;
 
-			$log['alias']  = $this->_alias;
-			$log['hash']   = $this->_hash;
-			$log['error']  = null;
-			$log['time']   = 0;
-			$log['caller'] = array(
+			$this->_log[$hash]['alias']  = $this->_alias;
+			$this->_log[$hash]['hash']   = $this->_hash;
+			$this->_log[$hash]['error']  = null;
+			$this->_log[$hash]['time']   = 0;
+			$this->_log[$hash]['caller'] = array(
 				'file'     => $debug[$callerIdx['file']]['file'],
 				'line'     => $debug[$callerIdx['line']]['line'],
 				'class'    => $debug[$callerIdx['class']]['class'],
 				'function' => $debug[$callerIdx['function']]['function']
 			);
-			$log['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
+			$this->_log[$hash]['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
 
 			try
 			{
@@ -221,7 +221,7 @@
 
 					if (count($bind) > 0)
 					{
-						$log['tokens']['total'] = count($bind);
+						$this->_log[$hash]['tokens']['total'] = count($bind);
 
 						preg_match_all('/(?<=\:)\w*/im', $query, $params);
 
@@ -246,38 +246,34 @@
 						$endTime = microtime(true);
 
 					} else {
-						
-						$log['error']['message'] = 'There was an error executing your query';
+
+						$this->_log[$hash]['error']['message'] = 'There was an error executing your query';
 					}
 
 				}  else {
 
-					$log['error']['message'] = $this->_log['connection']->getMessage();
+					$this->_log[$hash]['error']['message'] = $this->_log['connection']->getMessage();
 				}
 
 			} catch (PDOException $e) {
 				
 				$endTime = microtime(true);
-				$debug = debug_backtrace();
+				$debug   = debug_backtrace();
 
-				$log['error'] = array(
+				$this->_log[$hash]['error'] = array(
 					'file'    => $debug[2]['file'],
 					'line'    => $debug[2]['line'],
 					'message' => $e->getMessage()
 				);
 			}
 
-			$log['time'] = $endTime - $starTime;
+			$this->_log[$hash]['time'] = $endTime - $starTime;
 
-			$this->_log[$hash] = $log;
-
-			if (is_null($log['error']))
+			if (is_null($this->_log[$hash]['error']))
 				unset($this->_log[$hash]['error']);
 
-			$log['log']     = $log;
-			$log['results'] = $results;
-
-			$this->_log[$hash] = $log;
+			$this->_log[$hash]['log']     = $log;
+			$this->_log[$hash]['results'] = $results;
 
 			return $results;
 		}
