@@ -272,7 +272,6 @@
 			if (is_null($this->_log[$hash]['error']))
 				unset($this->_log[$hash]['error']);
 
-			$this->_log[$hash]['log']     = $log;
 			$this->_log[$hash]['results'] = $results;
 
 			return $results;
