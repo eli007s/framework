@@ -141,6 +141,11 @@
 		{
 			$debug = debug_backtrace();
 
+			$callerIdx['file']     = 0;
+			$callerIdx['line']     = 0;
+			$callerIdx['class']    = 0;
+			$callerIdx['function'] = 0;
+
 			if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
 			{
 				$callerIdx['file']     = 1;
