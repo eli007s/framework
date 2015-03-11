@@ -10,6 +10,7 @@
 		private $_hash      = null;
 		private $_alias     = null;
 		private $_fetchMode = PDO::FETCH_ASSOC;
+		private $_mute      = false;
 
 		public function __construct($alias, $driver, $user = null, $pass = null)
 		{
@@ -34,6 +35,11 @@
 					$this->_log['connection'] = $e;
 				}
 			}
+		}
+
+		public function mute($mute = false)
+		{
+			$this->_mute = $mute;
 		}
 
 		public function getDSN()
@@ -210,12 +216,17 @@
 			$this->_log[$hash]['hash']   = $this->_hash;
 			$this->_log[$hash]['error']  = null;
 			$this->_log[$hash]['time']   = 0;
-			$this->_log[$hash]['caller'] = array(
-				'file'     => $debug[$callerIdx['file']]['file'],
-				'line'     => $debug[$callerIdx['line']]['line'],
-				'class'    => $debug[$callerIdx['class']]['class'],
-				'function' => $debug[$callerIdx['function']]['function']
-			);
+
+			if (!$this->_mute)
+			{
+				$this->_log[$hash]['caller'] = array(
+					'file'     => $debug[$callerIdx['file']]['file'],
+					'line'     => $debug[$callerIdx['line']]['line'],
+					'class'    => $debug[$callerIdx['class']]['class'],
+					'function' => $debug[$callerIdx['function']]['function']
+				);
+			}
+
 			$this->_log[$hash]['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
 
 			try
@@ -265,11 +276,14 @@
 				$endTime = microtime(true);
 				$debug   = debug_backtrace();
 
-				$this->_log[$hash]['error'] = array(
-					'file'    => $debug[2]['file'],
-					'line'    => $debug[2]['line'],
-					'message' => $e->getMessage()
-				);
+				if(!$this->_mute)
+				{
+					$this->_log[$hash]['error'] = array(
+						'file'    => $debug[2]['file'],
+						'line'    => $debug[2]['line'],
+						'message' => $e->getMessage()
+					);
+				}
 			}
 
 			$this->_log[$hash]['time'] = $endTime - $starTime;
