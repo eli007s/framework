@@ -10,7 +10,7 @@
 		private $_hash      = null;
 		private $_alias     = null;
 		private $_fetchMode = PDO::FETCH_ASSOC;
-		private $_mute      = false;
+		private $_mute      = true;
 
 		public function __construct($alias, $driver, $user = null, $pass = null)
 		{
