@@ -147,7 +147,7 @@
 		{
 			$debug = debug_backtrace();
 
-			$callerIdx['file']     = 0;
+			/*$callerIdx['file']     = 0;
 			$callerIdx['line']     = 0;
 			$callerIdx['class']    = 0;
 			$callerIdx['function'] = 0;
@@ -206,7 +206,7 @@
 				$callerIdx['line']     = 8;
 				$callerIdx['class']    = 6;
 				$callerIdx['function'] = 6;
-			}
+			}*/
 
 			$results  = null;
 			$starTime = microtime(true);
@@ -217,7 +217,7 @@
 			$this->_log[$hash]['error']  = null;
 			$this->_log[$hash]['time']   = 0;
 
-			if (!$this->_mute)
+			/*if (!$this->_mute)
 			{
 				$this->_log[$hash]['caller'] = array(
 					'file'     => $debug[$callerIdx['file']]['file'],
@@ -225,7 +225,7 @@
 					'class'    => $debug[$callerIdx['class']]['class'],
 					'function' => $debug[$callerIdx['function']]['function']
 				);
-			}
+			}*/
 
 			$this->_log[$hash]['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
 
@@ -276,14 +276,16 @@
 				$endTime = microtime(true);
 				$debug   = debug_backtrace();
 
-				if(!$this->_mute)
-				{
+				//if(!$this->_mute)
+				//{
 					$this->_log[$hash]['error'] = array(
 						'file'    => $debug[2]['file'],
 						'line'    => $debug[2]['line'],
 						'message' => $e->getMessage()
 					);
-				}
+				//}
+
+				$this->_log[$hash]['error']['message'] = $e->getMessage();
 			}
 
 			$this->_log[$hash]['time'] = $endTime - $starTime;
