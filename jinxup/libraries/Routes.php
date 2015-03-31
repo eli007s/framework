@@ -52,6 +52,15 @@
 			return isset($subdomain[$depth]) ? $subdomain[$depth] : null;
 		}
 
+		public static function getDomainExt()
+		{
+			$host = parse_url(getenv('HTTP_HOST'));
+
+			preg_match('/(.*?)((\.co)?.[a-z]{2,4})$/im', $host['host'], $m);
+
+			return isset($m[2]) ? $m[2] : '';
+		}
+
 		public static function getURI()
 		{
 			$uri = str_replace('index.php', '', getenv('PHP_SELF'));
