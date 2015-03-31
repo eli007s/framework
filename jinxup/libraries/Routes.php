@@ -54,7 +54,7 @@
 
 		public static function getDomainExt()
 		{
-			$host = parse_url(getenv('SERVER_NAME'));
+			$host = parse_url(getenv('HTTP_HOST'));
 
 			preg_match('/(.*?)((\.co)?.[a-z]{2,4})$/im', $host['host'], $m);
 
