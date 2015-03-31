@@ -42,7 +42,7 @@
 
 		public static function getDomain()
 		{
-			return parse_url(getenv('SERVER_NAME'), PHP_URL_PATH);
+			return parse_url(getenv('HTTP_HOST'), PHP_URL_PATH);
 		}
 
 		public static function getSubdomain($depth = 0)
