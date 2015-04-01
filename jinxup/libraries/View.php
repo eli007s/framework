@@ -3,14 +3,18 @@
 	class JXP_View extends Jinxup
 	{
 		private static $_smarty    = null;
-		private static $_tplPath   = 'views';
 		private static $_config    = array();
 		private static $_params    = array();
 		private static $_regFilter = true;
+		private static $_paths     = array(
+			'views'   => 'views',
+			'compile' => '',
+			'plugins' => 'views/plugins'
+		);
 
 		public static function __callStatic($name, $params)
 		{
-			self::viewInit();
+			self::_viewInit();
 
 			$return = null;
 
@@ -39,20 +43,20 @@
 			return $return;
 		}
 
-		public static function setTplPath($path)
+		public static function setPath($key, $path)
 		{
-			self::$_tplPath = $path;
+			self::$_paths[$key] = $path;
 		}
 
 		public static function setConfig($config, $app)
 		{
 			if (isset($app['views']))
-				self::$_tplPath = $app['views'];
+				self::$_paths['views'] = $app['views'];
 
 			self::$_config = $config;
 		}
 
-		public static function viewInit()
+		private static function _viewInit($_vars = array())
 		{
 			if (is_null(self::$_smarty))
 			{
@@ -69,7 +73,12 @@
 				if (isset(self::$_config['template']['delimiters']['right']))
 					self::$_smarty->right_delimiter = self::$_config['template']['delimiters']['right'];
 
-				$_app = array(
+				$vars = array();
+
+				if (isset($_vars['app']))
+					$vars = $_vars['app'];
+
+				$_vars['app'] = array(
 					'active'     => JXP_Application::getActive(),
 					'controller' => JXP_Routes::getController(),
 					'action'     => JXP_Routes::getActionCall(),
@@ -77,7 +86,14 @@
 					'param'      => JXP_Routes::getParams()
 				);
 
-				$_jxp = array(
+				$_vars['app'] = array_merge($_vars['app'], $vars);
+
+				$vars = array();
+
+				if (isset($_vars['app']))
+					$vars = $_vars['app'];
+
+				$_vars['jxp'] = array(
 					'assets'  => '/jinxup/framework/assets',
 					'session' => isset($_SESSION) ? $_SESSION : array(),
 					'post'    => !empty($_POST) ? $_POST : array(),
@@ -85,10 +101,12 @@
 					'tracker' => array('getIP' => JXP_Tracker::getIP())
 				);
 
-				self::$_smarty->assign('app', $_app);
-				self::$_smarty->assign('jxp', $_jxp);
-				self::$_smarty->setTemplateDir(self::$_tplPath);
-				self::$_smarty->addPluginsDir(self::$_tplPath . DS . 'plugins');
+				$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
+
+				self::$_smarty->assign('app', $_vars['app']);
+				self::$_smarty->assign('jxp', $_vars['jxp']);
+				self::$_smarty->setTemplateDir(self::$_paths['views']);
+				self::$_smarty->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
 				self::$_smarty->registerResource('file', new RecompileFileResource());
 			}
 
@@ -97,17 +115,15 @@
 
 		public static function set($key, $val)
 		{
-			self::viewInit();
-
 			self::$_smarty->assign($key, $val);
 		}
 
 		public static function render($tpl)
 		{
+			$_vars = array();
+
 			try
 			{
-				self::viewInit();
-
 				if (strpos($tpl, 'app::') !== false)
 				{
 					preg_match('/app::(.*):(.*)/im', $tpl, $matches);
@@ -116,7 +132,11 @@
 					{
 						$tpl = $matches[2];
 
-						self::$_tplPath = dirname(dirname(realpath(self::$_tplPath))) . DS . $matches[1] . DS . 'views';
+						$applicationPath = $_SERVER['DOCUMENT_ROOT'] . DS . JXP_Application::getDirectories('applications');
+
+						self::$_paths['views'] = $applicationPath . DS . $matches[1] . DS . 'views';
+
+						$_vars['app']['assets'] = '/' . JXP_Application::getDirectories('applications') . '/' . $matches[1] . '/' . 'assets';
 					}
 
 				} else {
@@ -127,16 +147,16 @@
 
 						$tpl = $matches[1];
 
-						self::$_tplPath = dirname(__DIR__) . DS . 'views' . DS . 'shared';
+						self::$_paths['views'] = dirname(__DIR__) . DS . 'views' . DS . 'shared';
 					}
 				}
 
-				self::$_smarty->display(self::$_tplPath . DS . ltrim($tpl, '/'));
+				self::_viewInit($_vars);
+				self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
 
 			} catch (SmartyException $e) {
 
-				$error   = $e->getMessage();
-				$message = array();
+				$error = $e->getMessage();
 
 				if (preg_match('/Syntax error in template/im', $error, $match))
 				{

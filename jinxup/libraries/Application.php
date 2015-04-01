@@ -5,11 +5,24 @@
 		private static $_active = null;
 		private static $_app    = array();
 		private static $_apps   = array();
+		private static $_using  = null;
 		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
+
+		public function __call($name, $params)
+		{
+			echo $name;
+		}
 
 		public static function setActive($active = null)
 		{
 			self::$_active = $active;
+		}
+
+		public static function using($app)
+		{
+			self::$_using = $app;
+
+			return new self();
 		}
 
 		public static function setDirectories($dirs = array())

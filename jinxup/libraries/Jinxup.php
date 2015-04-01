@@ -322,7 +322,7 @@
 							JXP_Application::setApp(self::$_app);
 
 							if (isset(self::$_app['paths']['views']))
-								JXP_View::setTplPath(self::$_app['paths']['views']);
+								JXP_View::setPath('views', self::$_app['paths']['views']);
 
 							if (isset(self::$_app['paths']['config']))
 								self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
@@ -467,7 +467,7 @@
 			if (is_dir($errorPath))
 			{
 				JXP_Application::setApps(self::$_apps);
-				JXP_View::setTplPath($errorPath);
+				JXP_View::setPath('views', $errorPath);
 
 				JXP_View::render($errorTpl);
 			}
