@@ -5,10 +5,26 @@
 		private static $_active = null;
 		private static $_app    = array();
 		private static $_apps   = array();
+		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
 
 		public static function setActive($active = null)
 		{
 			self::$_active = $active;
+		}
+
+		public static function setDirectories($dirs = array())
+		{
+			self::$_dirs = $dirs;
+		}
+
+		public static function getDirectories($key = null)
+		{
+			$return = self::$_dirs;
+
+			if (!is_null($key) && isset(self::$_dirs[$key]))
+				$return = self::$_dirs[$key];
+
+			return $return;
 		}
 
 		public static function getActive()

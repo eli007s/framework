@@ -8,7 +8,6 @@
 		private static $_init       = null;
 		private static $_apps       = array();
 		private static $_loadedApps = array();
-		private static $_dirs       = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
 		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
@@ -232,7 +231,7 @@
 
 		private static function _findApplications()
 		{
-			self::$_apps = JXP_Directory::scan(getcwd() . DS . self::$_dirs['applications']);
+			self::$_apps = JXP_Directory::scan(getcwd() . DS . JXP_Application::getDirectories('applications'));
 		}
 
 		private static function _setApplication($forceApp = null)
@@ -240,18 +239,26 @@
 			$activeApp = null;
 			$app       = array();
 			$config    = self::$_config;
+			$dirs      = JXP_Application::getDirectories();
 
-			if (isset($config['directories']['applications']))
+			if (isset($config['directories']))
 			{
-				if (is_dir(getcwd() . DS . $config['directories']['applications']))
-					self::$_dirs['applications'] = $config['directories']['applications'];
+				$dirs = $config['directories'];
 
-				unset(self::$_config['directories']);
+				if (isset($dirs['applications']))
+				{
+					if (is_dir(getcwd() . DS . $dirs['applications']))
+						$dirs['applications'] = $dirs['applications'];
+
+					unset(self::$_config['directories']);
+				}
+
+				JXP_Application::setDirectories($config['directories']);
 			}
 
 			if (empty(self::$_apps))
 			{
-				self::_logExit('welcome',242);
+				self::_logExit('welcome', 242);
 
 			} else {
 
@@ -295,7 +302,7 @@
 					}
 				}
 
-				$app['path']         = getcwd() . DS . self::$_dirs['applications'] . DS . $activeApp;
+				$app['path']         = getcwd() . DS . $dirs['applications'] . DS . $activeApp;
 				self::$_app          = $app;
 				self::$_loadedApps[] = $activeApp;
 
