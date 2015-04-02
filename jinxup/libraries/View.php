@@ -115,6 +115,8 @@
 
 		public static function set($key, $val)
 		{
+			self::_viewInit();
+
 			self::$_smarty->assign($key, $val);
 		}
 
