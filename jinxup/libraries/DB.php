@@ -89,12 +89,8 @@
 
 					if (extension_loaded('sqlite3') || extension_loaded('pdo_sqlite'))
 					{
-						if (!empty($storage) || !is_null($storage))
-							$file .= getcwd() . DS . trim($storage, '/');
-						else
-							$file .= ':memory:';
-
-						$_driver = "sqlite:{$file}";
+						$file    .= !empty($storage) || !is_null($storage) ? getcwd() . DS . trim($storage, '/') : ':memory:';
+						$_driver  = "sqlite:{$file}";
 
 					} else {
 
@@ -161,9 +157,9 @@
 
 			} else {
 
-				if (method_exists($dbObj->getObj(), $alias))
+				if (method_exists($dbObj->getConnection(), $alias))
 				{
-					$dbObj = $dbObj->getObj();
+					$dbObj = $dbObj->getConnection();
 
 					if (count($params) == 4)
 						$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
@@ -226,9 +222,9 @@
 
 			} else {
 
-				if (method_exists($dbObj->getObj(), $alias))
+				if (method_exists($dbObj->getConnection(), $alias))
 				{
-					$dbObj = $dbObj->getObj();
+					$dbObj = $dbObj->getConnection();
 
 					if (count($params) == 4)
 						$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);

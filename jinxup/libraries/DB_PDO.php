@@ -5,8 +5,6 @@
 		private $_con       = null;
 		private $_log       = array();
 		private $_driver    = null;
-		private $_user      = null;
-		private $_pass      = null;
 		private $_hash      = null;
 		private $_alias     = null;
 		private $_fetchMode = PDO::FETCH_ASSOC;
@@ -16,17 +14,15 @@
 		{
 			$this->_alias  = $alias;
 			$this->_driver = $driver;
-			$this->_user   = $user;
-			$this->_pass   = $pass;
 
 			if (is_null($this->_con))
 			{
 				try {
 
-					if (strpos($this->_driver, 'sqlite') !== false)
-						$this->_con = new PDO($this->_driver);
+					if (strpos($driver, 'sqlite') !== false)
+						$this->_con = new PDO($driver);
 					else
-						$this->_con = new PDO($this->_driver, $this->_user, $this->_pass);
+						$this->_con = new PDO($driver, $user, $pass);
 
 					$this->_con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -51,17 +47,15 @@
 		{
 			$mode = strtolower($mode);
 
-			if ($mode == 'assoc')
-				$this->_fetchMode = PDO::FETCH_ASSOC;
-			else if ($mode == 'object')
+			$this->_fetchMode = PDO::FETCH_ASSOC;
+
+			if ($mode == 'object')
 				$this->_fetchMode = PDO::FETCH_OBJ;
-			else
-				$this->_fetchMode = PDO::FETCH_ASSOC;
 
 			return $this;
 		}
 
-		public function getObj()
+		public function getConnection()
 		{
 			return isset($this->_con) ? $this->_con : null;
 		}
