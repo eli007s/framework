@@ -69,7 +69,7 @@
 			$pass    = '';
 			$file    = '';
 			$port    = 3306;
-			$storage = '';
+			$store   = '';
 			$driver  = 'PDO';
 			$_alias  = null;
 			$_driver = null;
@@ -89,7 +89,7 @@
 
 					if (extension_loaded('sqlite3') || extension_loaded('pdo_sqlite'))
 					{
-						$file    .= !empty($storage) || !is_null($storage) ? getcwd() . DS . trim($storage, '/') : ':memory:';
+						$file    .= !empty($store) || !is_null($store) ? getcwd() . DS . trim($store, '/') : ':memory:';
 						$_driver  = "sqlite:{$file}";
 
 					} else {
@@ -107,6 +107,7 @@
 					break;
 			}
 
+			// TODO: possible error being thrown if $alias index does not exist
 			self::$_database[$alias] = !is_null($_driver) ? new JXP_DB_PDO($alias, $_driver, $user, $pass) : array();
 
 			return self::$_database[$alias];
