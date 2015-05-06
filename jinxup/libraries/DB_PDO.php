@@ -25,6 +25,8 @@
 						$this->_con = new PDO($driver, $user, $pass);
 
 					$this->_con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+					$this->_con->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+					$this->_con->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 
 				} catch (PDOException $e) {
 
