@@ -317,7 +317,7 @@
 							$param = PDO::PARAM_NULL;
 						}
 
-						if (is_numeric($bind[$value]))
+						if (is_numeric($bind[$value]) && !preg_match('/[a-z]/im', $bind[$value]))
 						{
 							$type  = 'INTEGER';
 							$param = PDO::PARAM_INT;
