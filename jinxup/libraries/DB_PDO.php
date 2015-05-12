@@ -305,6 +305,12 @@
 						$param = null;
 						$type  = null;
 
+						if (is_string($bind[$value]))
+						{
+							$type  = 'STRING';
+							$param = PDO::PARAM_STR;
+						}
+
 						if (is_null($bind[$value]) || empty($bind[$value]))
 						{
 							$type  = 'NULL';
@@ -315,12 +321,6 @@
 						{
 							$type  = 'INTEGER';
 							$param = PDO::PARAM_INT;
-						}
-
-						if (is_string($bind[$value]))
-						{
-							$type  = 'STRING';
-							$param = PDO::PARAM_STR;
 						}
 
 						if (is_bool($bind[$value]))

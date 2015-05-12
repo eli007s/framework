@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-		<title>Jinxup 404</title>
+		<title>404</title>
 
 		<!--STYLESHEETS-->
 		<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
@@ -30,7 +30,7 @@
 				<header class="clearfix">
 					<div class="row">
 						<div class="col-md-5 col-sm-5">
-							<h3 class="brand"><a href="/" title="404">Jinxup</a></h3>
+							<h3 class="brand"><a href="/" title="404"></a></h3>
 						</div>
 					</div>
 				</header>
