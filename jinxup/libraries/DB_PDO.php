@@ -246,7 +246,7 @@
 
 					if ($execute !== false)
 					{
-						if (preg_match('/^(select|describe|call|drop|create|show)/im', $query))
+						if (preg_match('/^(select|describe|desc|call|drop|create|show)/im', $query))
 							$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 						if (preg_match('/^(delete|update)/im', $query))
