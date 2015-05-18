@@ -50,7 +50,7 @@
 
 					$pathKeys = array_keys(self::$_paths);
 
-					if (isset(self::$_paths[$pathKeys[1]]))
+					if (isset($pathKeys[1]) && isset(self::$_paths[$pathKeys[1]]))
 					{
 						$_class = explode('_', $class);
 
@@ -66,7 +66,8 @@
 					$path = isset($_class[1]) ? self::$_paths[$pathKeys[1]] . DS . strtolower($_class[1]) . 's' : __DIR__;
 				}
 
-				$file = self::search($class, $_class, $path);
+				if (isset($_class))
+					$file = self::search($class, $_class, $path);
 			}
 
 			if (!is_null($file) && file_exists($file))
