@@ -442,14 +442,11 @@
 					{
 						$errorPath = rtrim(self::$_app['paths']['views'], '/');
 
-						if (array_key_exists('*', self::$_config['errors']['catch']) )
-							$errorTpl = trim(self::$_config['errors']['catch']['*'], '/');
-
-						if (array_key_exists('all', self::$_config['errors']['catch']) )
-							$errorTpl = trim(self::$_config['errors']['catch']['all'], '/');
-
-						if (array_key_exists($errorCode, self::$_config['errors']['catch']) )
-							$errorTpl = trim(self::$_config['errors']['catch'][$errorCode], '/');
+						foreach (self::$_config['errors']['catch'] as $key => $value)
+						{
+							if ($key == '*' || $key == 'all' || $key == $errorCode)
+								$errorTpl = trim(self::$_config['errors']['catch'][$key], '/');
+						}
 					}
 
 				} else {
