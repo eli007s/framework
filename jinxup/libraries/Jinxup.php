@@ -249,7 +249,6 @@
 		private static function _findApplications()
 		{
 			self::$_apps = JXP_Directory::scan(getcwd() . DS . JXP_Application::getDirectories('applications'));
-			echo '<pre>', print_r(self::$_apps, true), '</pre>';
 		}
 
 		private static function _setApplication($forceApp = null)
