@@ -429,7 +429,7 @@
 			return self::$_config;
 		}
 
-		protected static function _logExit($errorType = null,$line=0)
+		protected static function _logExit($errorType = null, $line = 0)
 		{
 			self::$_exit = true;
 
@@ -438,8 +438,8 @@
 			$errorCode = 404;
 			$errorTpl  = null;
 			$errorPath = getcwd() . DS . 'views';
-echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
-			//ob_start();
+
+			ob_start();
 
 			header('HTTP/1.0 404 Not Found');
 
@@ -447,9 +447,11 @@ echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
 
 			if ($errorCode == 404 || $errorCode == 500)
 			{
-				if (!empty(self::$_config['error']) && isset(self::$_config['error']['catch']))
+				$issetError = isset(self::$_config['errors']) ? 'errors' : 'error';
+
+				if (!empty(self::$_config[$issetError]) && isset(self::$_config[$issetError]['catch']))
 				{
-					$catch = self::$_config['error']['catch'];
+					$catch = self::$_config[$issetError]['catch'];
 
 					if (isset(self::$_app['paths']['views']))
 					{
