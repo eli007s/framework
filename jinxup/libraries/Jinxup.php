@@ -108,7 +108,9 @@
 
 		private static function _sessions()
 		{
-			if (isset(self::$_config['session']) && JXP_Tracker::getIP() != '127.0.0.1')
+			$ip = JXP_Tracker::getIP();
+
+			if (isset(self::$_config['session']) && ($ip != '127.0.0.1' || $ip != '::1'))
 			{
 				$cfgSess = self::$_config['session'];
 				$use     = isset($cfgSess['use']) ? $cfgSess['use'] : 'redis';
@@ -151,16 +153,22 @@
 			session_start();
 		}
 
-		private static function _prepareURI()
+		private static function _prepareURI($uri = null)
 		{
-			self::$_routes['params'] = explode('/', JXP_Routes::getURI());
+			self::$_routes['params'] = explode('/', is_null($uri) ? JXP_Routes::getURI() : $uri);
 
 			return self::$_routes['params'];
 		}
 
 		private static function _runRoutes()
 		{
-			$params = array_filter(self::$_routes['params']);
+			$params = array();
+
+			foreach (self::$_routes['params'] as $key => $value)
+			{
+				if (!is_null($value) || strlen($value) > 0)
+					$params[] = $value;
+			}
 
 			if (isset($params[0]) && strtolower($params[0]) == 'assets')
 			{
@@ -179,15 +187,24 @@
 
 			} else {
 
-				$params = preg_replace('/\.php/im', '', $params);
-
-				self::_prepareRoutes($params);
+				self::_prepareRoutes();
 				self::_loadApplication();
 			}
 		}
 
-		private static function _prepareRoutes($params)
+		private static function _prepareRoutes($_params = array())
 		{
+			$_params = array_filter(empty($params) ? self::$_routes['params'] : $params);
+			$params  = array();
+
+			foreach ($_params as $key => $value)
+			{
+				$value = preg_replace('/\.php/im', '', $value);
+
+				if (!is_null($value) || strlen($value) > 0)
+					$params[] = $value;
+			}
+
 			if (!empty($params))
 			{
 				if ($params[0] != '-')
@@ -232,6 +249,7 @@
 		private static function _findApplications()
 		{
 			self::$_apps = JXP_Directory::scan(getcwd() . DS . JXP_Application::getDirectories('applications'));
+			echo '<pre>', print_r(self::$_apps, true), '</pre>';
 		}
 
 		private static function _setApplication($forceApp = null)
@@ -243,17 +261,11 @@
 
 			if (isset($config['directories']))
 			{
-				$dirs = $config['directories'];
-
-				if (isset($dirs['applications']))
+				foreach ($config['directories'] as $key => $value)
 				{
-					if (is_dir(getcwd() . DS . $dirs['applications']))
-						$dirs['applications'] = $dirs['applications'];
-
-					unset(self::$_config['directories']);
+					if (is_dir(getcwd() . DS . $value))
+						JXP_Application::setDirectory($key, $value);
 				}
-
-				JXP_Application::setDirectories($config['directories']);
 			}
 
 			if (empty(self::$_apps))
@@ -427,8 +439,8 @@
 			$errorCode = 404;
 			$errorTpl  = null;
 			$errorPath = getcwd() . DS . 'views';
-
-			ob_start();
+echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
+			//ob_start();
 
 			header('HTTP/1.0 404 Not Found');
 
@@ -436,16 +448,129 @@
 
 			if ($errorCode == 404 || $errorCode == 500)
 			{
-				if (!empty(self::$_config['errors']) && isset(self::$_config['errors']['catch']))
+				if (!empty(self::$_config['error']) && isset(self::$_config['error']['catch']))
 				{
+					$catch = self::$_config['error']['catch'];
+
 					if (isset(self::$_app['paths']['views']))
 					{
 						$errorPath = rtrim(self::$_app['paths']['views'], '/');
 
-						foreach (self::$_config['errors']['catch'] as $key => $value)
+						foreach ($catch as $key => $value)
 						{
+							$_c = $catch[$key];
+							
 							if ($key == '*' || $key == 'all' || $key == $errorCode)
-								$errorTpl = trim(self::$_config['errors']['catch'][$key], '/');
+							{
+								if (is_array($_c))
+								{
+									$errorKeys  = array_keys($_c);
+									$breakError = false;
+
+									foreach ($errorKeys as $k)
+									{
+										switch ($k)
+										{
+											case 'redirect':
+											case 'location':
+												
+												$location = isset($_c['redirect']) ? $_c['redirect'] : $_c['location'];
+
+												if (strlen($location) > 0)
+												{
+													$currentRoutes = self::$_routes;
+
+													self::_prepareURI($location);
+													self::_prepareRoutes();
+
+													$locationRoutes = self::$_routes;
+													$breakError     = true;
+
+													$c1 = $currentRoutes['controller'];
+													$c2 = $locationRoutes['controller'];
+													$a1 = $currentRoutes['action'];
+													$a2 = $locationRoutes['action'];
+
+													if ($c1 != $c2 && $a1 != $a2)
+														header('Location: ' . $location);
+
+													break;
+												}
+
+											case 'file':
+
+												$file = $_SERVER['DOCUMENT_ROOT'] . DS . ltrim($_c['file'], '/');
+
+												if (strlen($file) > 0 && file_exists($file))
+												{
+													require_once $file;
+
+													exit;
+
+													break;
+												}
+
+											case 'load':
+
+												$readyToLoad = false;
+
+												if (!is_array($_c[$k]))
+												{
+													if (strlen($_c{$k}) > 0)
+													{
+														$readyToLoad = true;
+														$errorType   = trim($_c[$k], '/');
+													}
+
+												} else {
+
+													if (isset($_c[$k]['controller']) && strlen($_c[$k]['controller']) > 0)
+													{
+														$readyToLoad = true;
+
+														JXP_Routes::setController($_c[$k]['controller'] . '_Controller');
+
+														if (isset($_c[$k]['action']) && strlen($_c[$k]['action']) > 0)
+														{
+															$readyToLoad = true;
+
+															JXP_Routes::setAction($_c[$k]['action'] . 'Action');
+
+															if (isset($_c[$k]['params']) && count($_c[$k]['params']) > 0)
+																JXP_Routes::addParams($_c[$k]['params']);
+
+														} else {
+
+															JXP_Routes::setAction('indexAction');
+														}
+
+														// TODO: load controller / action / params
+													}
+												}
+
+												if ($readyToLoad === true)
+												{
+													$breakError = true;
+
+													break;
+												}
+
+											default:
+
+												$breakError = true;
+
+												break;
+										}
+										
+										if ($breakError === true)
+											break;
+									}
+								
+								} else {
+									
+									$errorTpl = trim($_c, '/');
+								}
+							}
 						}
 					}
 

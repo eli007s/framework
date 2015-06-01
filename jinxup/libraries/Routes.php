@@ -70,7 +70,7 @@
 			$uri     = str_replace($uri, '', getenv('REQUEST_URI'));
 			$request = rawurldecode(trim(parse_url($uri, PHP_URL_PATH), '/'));
 
-			return $request;
+			return '/' . $request;
 		}
 
 		public static function getParamCount()
@@ -87,6 +87,11 @@
 		{
 			for ($i = 0; $i < $count; $i++)
 				self::$_routes['params'][] = $name;
+		}
+
+		public static function addParams($params)
+		{
+			self::$_routes['params'] += $params;
 		}
 
 		public static function assocParams($params = array())

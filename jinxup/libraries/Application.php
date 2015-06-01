@@ -30,6 +30,12 @@
 			self::$_dirs = $dirs;
 		}
 
+		public static function setDirectory($key, $value)
+		{
+			if (array_key_exists($key, self::$_dirs))
+				self::$_dirs[$key] = $value;
+		}
+
 		public static function getDirectories($key = null)
 		{
 			$return = self::$_dirs;
