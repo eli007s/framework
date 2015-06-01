@@ -27,15 +27,8 @@
 	<body>
 		<div class="container">
 			<div id="wrapper">
-				<header class="clearfix">
-					<div class="row">
-						<div class="col-md-5 col-sm-5">
-							<h3 class="brand"><a href="/" title="404">Jinxup</a></h3>
-						</div>
-					</div>
-				</header>
 		
-				<article>
+				<article class="clearfix">
 					<div class="tab-content-wrapper">
 						<div class="tb-content active" id="home">
 							<div class="box">
