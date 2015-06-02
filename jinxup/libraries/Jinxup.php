@@ -8,10 +8,13 @@
 		private static $_init       = null;
 		private static $_apps       = array();
 		private static $_loadedApps = array();
+		private static $_thisPath   = null;
 		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
 		{
+			self::$_thisPath = dirname(__DIR__);
+
 			if (!defined('DS'))
 				define('DS', DIRECTORY_SEPARATOR);
 
@@ -51,13 +54,18 @@
 					self::_logExit('application');
 				}
 
-				exit;
+				self::stop();
 			}
 		}
 		
 		public static function stop()
 		{
 			exit;
+		}
+
+		public static function installPath()
+		{
+			return self::$_thisPath;
 		}
 
 		public static function path($dir)

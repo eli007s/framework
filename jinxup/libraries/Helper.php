@@ -17,11 +17,18 @@
 
 				$bt = debug_backtrace();
 
-				$response  = 'Helper ' . $name . ' was not found.<br /><br />';
-				$response .= 'Called From: ' . $bt[1]['class'] . '<br />';
-				$response .= 'Line: ' . $bt[0]['line'];
+				$helper = array(
+					'name'   => $name,
+					'caller' => $bt[1]['class'],
+					'line'   => $bt[0]['line']
+				);
 
-				echo $response;
+				$errorPath = Jinxup::installPath() . DS . 'views';
+				$errorTpl  = 'helper_error.tpl';
+
+				JXP_View::setPath('views', $errorPath);
+				JXP_View::set('helper', $helper);
+				JXP_View::render($errorTpl);
 			}
 
 			return $return;
@@ -40,11 +47,18 @@
 
 			} else {
 
-				$response  = 'Helper ' . $name . ' was not found.<br /><br />';
-				$response .= 'Called From: ' . $bt[1]['class'] . '<br />';
-				$response .= 'Line: ' . $bt[0]['line'];
+				$helper = array(
+					'name'   => $name,
+					'caller' => $bt[1]['class'],
+					'line'   => $bt[0]['line']
+				);
 
-				echo $response;
+				$errorPath = Jinxup::installPath() . DS . 'views';
+				$errorTpl  = 'helper_error.tpl';
+
+				JXP_View::setPath('views', $errorPath);
+				JXP_View::set('helper', $helper);
+				JXP_View::render($errorTpl);
 			}
 
 			return $return;
