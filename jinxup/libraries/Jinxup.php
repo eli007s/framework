@@ -514,7 +514,7 @@
 												{
 													require_once $file;
 
-													exit;
+													self::stop();
 
 													break;
 												}
@@ -603,7 +603,7 @@
 				JXP_View::render($errorTpl);
 			}
 
-			exit;
+			self::stop();
 		}
 
 		private static function _checkApplicationIntegrity($path)
