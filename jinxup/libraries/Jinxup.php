@@ -19,6 +19,8 @@
 				define('DS', DIRECTORY_SEPARATOR);
 
 			self::_autoload();
+
+			JXP_Error::register(E_ALL);
 		}
 
 		public function init()
@@ -277,7 +279,7 @@
 
 			if (empty(self::$_apps))
 			{
-				self::_logExit('welcome', 242);
+				self::_logExit('welcome', __LINE__);
 
 			} else {
 
@@ -301,7 +303,7 @@
 							if (array_key_exists($config['active'], self::$_apps))
 								$activeApp = $config['active'];
 							else
-								self::_logExit('application',266);
+								self::_logExit('application', __LINE__);
 
 							unset(self::$_config['active']);
 						}
@@ -317,7 +319,7 @@
 						}
 
 						if (is_null($activeApp))
-							self::_logExit('active',282);
+							self::_logExit('active', __LINE__);
 					}
 				}
 
@@ -351,24 +353,19 @@
 							if (isset(self::$_config['environment']))
 							{
 								if (self::$_config['environment'] == 'development')
-								{
-									error_reporting(E_ALL);
-									ini_set('display_errors', 1);
-									ini_set('auto_detect_line_endings', 1);
-									set_time_limit(0);
-								}
+									JXP_Error::$displayErrors = true;
 
 								unset(self::$_config['environment']);
 							}
 
 						} else {
 
-							self::_logExit('integrity',328);
+							self::_logExit('integrity', __LINE__);
 						}
 
 					} else {
 
-						self::_logExit('page',333);
+						self::_logExit('page', __LINE__);
 					}
 				}
 			}
@@ -414,12 +411,12 @@
 
 					} else {
 
-						self::_logExit('page',380);
+						self::_logExit('page', __LINE__);
 					}
 
 				} else {
 
-					self::_logExit('page',385);
+					self::_logExit('page', __LINE__);
 				}
 
 				if (!is_null($bootstrap) && is_callable(array($bootstrap, 'onDestruct')))

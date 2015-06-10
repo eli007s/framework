@@ -97,7 +97,7 @@
 					'assets'  => '/jinxup/framework/assets',
 					'session' => isset($_SESSION) ? $_SESSION : array(),
 					'post'    => !empty($_POST) ? $_POST : array(),
-					'routes'  => array('getURI' => '/' . JXP_Routes::getURI()),
+					'routes'  => array('getURI' => JXP_Routes::getURI()),
 					'tracker' => array('getIP' => JXP_Tracker::getIP())
 				);
 
@@ -108,9 +108,8 @@
 				self::$_smarty->setTemplateDir(self::$_paths['views']);
 				self::$_smarty->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
 				self::$_smarty->registerResource('file', new RecompileFileResource());
+				self::$_smarty->muteExpectedErrors();
 			}
-
-			return new self();
 		}
 
 		public static function set($key, $val)
@@ -124,36 +123,37 @@
 		{
 			$_vars = array();
 
-			try
+			if (strpos($tpl, 'app::') !== false)
 			{
-				if (strpos($tpl, 'app::') !== false)
+				preg_match('/app::(.*):(.*)/im', $tpl, $matches);
+
+				if (count($matches) >= 3)
 				{
-					preg_match('/app::(.*):(.*)/im', $tpl, $matches);
+					$tpl = $matches[2];
 
-					if (count($matches) >= 3)
-					{
-						$tpl = $matches[2];
+					$applicationPath = $_SERVER['DOCUMENT_ROOT'] . DS . JXP_Application::getDirectories('applications');
 
-						$applicationPath = $_SERVER['DOCUMENT_ROOT'] . DS . JXP_Application::getDirectories('applications');
+					self::$_paths['views'] = $applicationPath . DS . $matches[1] . DS . 'views';
 
-						self::$_paths['views'] = $applicationPath . DS . $matches[1] . DS . 'views';
-
-						$_vars['app']['assets'] = '/' . JXP_Application::getDirectories('applications') . '/' . $matches[1] . '/' . 'assets';
-					}
-
-				} else {
-
-					if (strpos($tpl, 'jinxup:') !== false)
-					{
-						preg_match('/jinxup:{1,}(.*)/im', $tpl, $matches);
-
-						$tpl = $matches[1];
-
-						self::$_paths['views'] = dirname(__DIR__) . DS . 'views' . DS . 'shared';
-					}
+					$_vars['app']['assets'] = '/' . JXP_Application::getDirectories('applications') . '/' . $matches[1] . '/' . 'assets';
 				}
 
-				self::_viewInit($_vars);
+			} else {
+
+				if (strpos($tpl, 'jinxup:') !== false)
+				{
+					preg_match('/jinxup:{1,}(.*)/im', $tpl, $matches);
+
+					$tpl = $matches[1];
+
+					self::$_paths['views'] = dirname(__DIR__) . DS . 'views' . DS . 'shared';
+				}
+			}
+
+			self::viewInit($_vars);
+
+			try
+			{
 				self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
 
 			} catch (SmartyException $e) {
@@ -163,7 +163,7 @@
 				if (preg_match('/Syntax error in template/im', $error, $match))
 				{
 					self::set('error', $e->getMessage());
-					self::_logExit('template_syntax');
+					self::_logExit('template_syntax', __LINE__);
 
 				} else {
 

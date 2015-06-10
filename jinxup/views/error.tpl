@@ -1,0 +1,35 @@
+<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link rel="stylesheet" href="/jinxup/assets/css/style.css" />
+<link href='//fonts.googleapis.com/css?family=Nunito:400,300,700' rel='stylesheet' type='text/css'>
+<link href='//fonts.googleapis.com/css?family=Muli:400,400italic' rel='stylesheet' type='text/css'>
+<link href="/jinxup/assets/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+<style type="text/css"></style>
+<!--[if lt IE 9]>
+<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<link rel="shortcut icon" href="/jinxup/assets/img/icons/favicon.ico">
+<script type="text/javascript" src="/jinxup/assets/js/modernizr-1.0.min.js"></script>
+<div class="container">
+	<div id="wrapper">
+		<article class="clearfix">
+			<div class="content-wrapper">
+				<div class="content active">
+					<h2>Error</h2>
+					{!foreach $errors as $error!}
+					<div class="box {!if isset($fatalError)!}fatal{!/if!}">
+						<div class="error-group">
+							<span class="error"><strong>Type:</strong>{!$error.type!}</span>
+						</div>
+						<br />
+					</div>
+					{!/foreach!}
+				</div>
+			</div>
+		</article>
+	</div>
+</div>
+<script src="/jinxup/assets/js/jquery.js"></script>
+<script src="/jinxup/assets/js/bootstrap.min.js"></script>
+<script src="/jinxup/assets/js/custom.js"></script>
+<script src="/jinxup/assets/js/missing.js"></script>
+<script src="/jinxup/assets/js/placeholders.js"></script>
