@@ -2,9 +2,10 @@
 
 	class JXP_Error
 	{
-		private static $_error    = array();
-		private static $_logTypes = E_ALL;
-		private static $errorType = array (
+		private static $_error      = array();
+		private static $_logTypes   = E_ALL;
+		private static $_showErrors = false;
+		private static $errorType   = array (
 			E_ERROR             => 'Error',
 			E_WARNING           => 'Warning',
 			E_PARSE             => 'Parsing Error',
@@ -31,6 +32,11 @@
 			register_shutdown_function('JXP_Error::shutdown');
 		}
 
+		public static function showErrors($bool = true)
+		{
+			self::$_showErrors = $bool;
+		}
+
 		public static function shutdown()
 		{
 			$error = error_get_last();
@@ -39,10 +45,10 @@
 			{
 				JXP_View::set('fatalError', true);
 
-				self::log($error['type'], $error['file'], $error['line'], $error['message'], array());
+				self::log($error['type'], $error['message'], $error['file'], $error['line'], array());
 			}
 
-			if (!empty(self::$_error))
+			if (!empty(self::$_error) && self::$_showErrors === true)
 			{
 				JXP_View::setPath('views', Jinxup::installPath() . DS . 'views');
 				JXP_View::set('errors', self::$_error);

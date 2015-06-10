@@ -352,8 +352,8 @@
 
 							if (isset(self::$_config['environment']))
 							{
-								if (self::$_config['environment'] == 'development')
-									JXP_Error::$displayErrors = true;
+								if (preg_match('/(dev)/mi', self::$_config['environment']))
+									JXP_Error::showErrors(true);
 
 								unset(self::$_config['environment']);
 							}

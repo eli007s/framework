@@ -1,5 +1,10 @@
-<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
-<link rel="stylesheet" href="/jinxup/assets/css/style.css" />
+{!if isset($fatalError)!}
+	<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link rel="stylesheet" href="/jinxup/assets/css/style.css" />
+{!else!}
+	<link rel="stylesheet" href="/jinxup/assets/css/error.css" />
+{!/if!}
+
 <link href='//fonts.googleapis.com/css?family=Nunito:400,300,700' rel='stylesheet' type='text/css'>
 <link href='//fonts.googleapis.com/css?family=Muli:400,400italic' rel='stylesheet' type='text/css'>
 <link href="/jinxup/assets/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet">
@@ -9,18 +14,34 @@
 <![endif]-->
 <link rel="shortcut icon" href="/jinxup/assets/img/icons/favicon.ico">
 <script type="text/javascript" src="/jinxup/assets/js/modernizr-1.0.min.js"></script>
-<div class="container">
+<div class="jxp-error container">
 	<div id="wrapper">
 		<article class="clearfix">
 			<div class="content-wrapper">
 				<div class="content active">
-					<h2>Error</h2>
-					{!foreach $errors as $error!}
-					<div class="box {!if isset($fatalError)!}fatal{!/if!}">
+					<h2>Oops found some error...</h2>
+					{!foreach $errors as $key => $error!}
+					<div class="box error {!if isset($fatalError)!}fatal{!/if!} {!if !isset($errors[$key + 1])!}last{!/if!}">
 						<div class="error-group">
-							<span class="error"><strong>Type:</strong>{!$error.type!}</span>
+							<span class="error key">Type: </span>
+							<span class="error value">{!$error.type!}</span>
 						</div>
-						<br />
+
+						<div class="error-group">
+							<span class="error key">Message: </span>
+							<span class="error value">{!$error.msg!}</span>
+						</div>
+
+						<div class="error-group">
+							<span class="error key">File: </span>
+							<span class="error value">{!$error.script.name!}</span>
+						</div>
+
+						<div class="error-group">
+							<span class="error key">Line: </span>
+							<span class="error value">{!$error.script.line!}</span>
+						</div>
+						<div class="line-break"></div>
 					</div>
 					{!/foreach!}
 				</div>
@@ -30,6 +51,4 @@
 </div>
 <script src="/jinxup/assets/js/jquery.js"></script>
 <script src="/jinxup/assets/js/bootstrap.min.js"></script>
-<script src="/jinxup/assets/js/custom.js"></script>
 <script src="/jinxup/assets/js/missing.js"></script>
-<script src="/jinxup/assets/js/placeholders.js"></script>

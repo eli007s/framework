@@ -35,9 +35,37 @@ a:hover, a:active, a:focus {
 }
 div.error-group span.error{
 	float: left;
+	display: block;
 }
 span.error {
 	font-size: .7em;
+}
+span.error.key {
+	font-weight: 600;
+	width: 50px;
+	text-align: left;
+}
+span.error.value {
+	line-height: 25px;
+	padding-left: 10px;
+}
+div.box.error{
+	overflow: hidden;
+}
+div.box.error.last{
+	margin-bottom: 20px;
+}
+div.error-group {
+	clear: both;
+}
+div.line-break {
+	height: 1px;
+	border-top: 1px solid #DBDBDB;
+	width: 100%;
+	margin: 20px auto;
+	clear: both;
+	top: 10px;
+	position: relative;
 }
 :active {
 	outline: none!important;
