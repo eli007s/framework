@@ -2,6 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
+		<meta name="viewport" content="width=320, maximum-scale=1.0">
 		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 		<title>Jinxup 404</title>
 		<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">

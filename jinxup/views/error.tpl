@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=320, maximum-scale=1.0">
 {!if isset($fatalError)!}
 	<link href="/jinxup/assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<link rel="stylesheet" href="/jinxup/assets/css/style.css" />
