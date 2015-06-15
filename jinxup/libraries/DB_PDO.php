@@ -108,12 +108,12 @@
 				{
 					if (!is_array($value))
 					{
-						$keys[]   = is_string($key) ? '/:' . $key . '/' : '/[?]/';
+						$keys[]   = is_string($key) ? '$:' . $key . '$' : '$[?]$';
 						$values[] = is_numeric($value) ? intval($value) : '"' . $value . '"';
 					}
 				}
 
-				$query = preg_replace('/' . $keys . '/', $values, $query);
+				$query = preg_replace($keys, $values, $query);
 			}
 
 			return $query;
