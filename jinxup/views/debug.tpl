@@ -16,7 +16,35 @@
 				<li><a href="#">Application Errors</a></li>
 			</ul>
 			<div class="jxp-console-content">
-				content here
+				<div id="server-variables">
+					{!foreach $debug.server as $key => $server!}
+					<div class="column">
+						<ul>
+							{!foreach $server as $key => $val!}
+							<li>
+								<span class="key">{!$key!}</span>
+								<span class="val">{!$val!}</span>
+							</li>
+							{!/foreach!}
+						</ul>
+					</div>
+					{!/foreach!}
+				</div>
+				<div id="cookies">
+
+				</div>
+				<div id="sessions">
+
+				</div>
+				<div id="queries">
+
+				</div>
+				<div id="template-vars">
+
+				</div>
+				<div id="errors">
+
+				</div>
 			</div>
 		</div>
 	</div>

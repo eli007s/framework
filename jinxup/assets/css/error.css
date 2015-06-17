@@ -8,8 +8,13 @@
 	font-family: 'Open Sans', Arial;
 }
 
-.jxp-console-dropdown-content, .jxp-console-content {
+.jxp-console-dropdown-content, .jxp-console-content, .jxp-console-content .column {
 	float: left;
+}
+
+.jxp-console-content li {
+	list-style: none;
+	list-style-type: none;
 }
 
 .jxp-console-trigger {
