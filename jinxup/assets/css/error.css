@@ -3,178 +3,100 @@
 #jxp-debug-console {
 	position: relative;
 	top: 0;
+	overflow: hidden;
+	background: #2a2e30;
+	font-family: 'Open Sans', Arial;
 }
 
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::before {
-	transform: translateX(5px) rotate(-45deg);
+.jxp-console-dropdown-content, .jxp-console-content {
+	float: left;
 }
 
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::before,
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::after {
-	width: 14px;
-}
-
-#jxp-debug-console .dropdown-trigger::before {
-	right: 22px;
-	transform: rotate(45deg);
-}
-
-#jxp-debug-console .dropdown-trigger::before,
-#jxp-debug-console .dropdown-trigger::after {
-	backface-visibility: hidden;
-	background: #ffffff none repeat scroll 0 0;
-	content: "";
-	height: 2px;
-	margin-top: -1px;
-	position: absolute;
-	top: 50%;
-	transition: width 0.3s ease 0s, transform 0.3s ease 0s;
-	width: 9px;
-}
-
-#jxp-debug-console *,
-#jxp-debug-console *::after,
-#jxp-debug-console *::before {
-	box-sizing: border-box;
-}
-
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::after {
-	transform: rotate(45deg);
-}
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::before,
-#jxp-debug-console .dropdown-trigger.dropdown-is-active::after {
-	width: 14px;
-}
-
-#jxp-debug-console .dropdown-trigger::after {
-	right: 17px;
-	transform: rotate(-45deg);
-}
-
-#jxp-debug-console .dropdown-trigger::before,
-#jxp-debug-console .dropdown-trigger::after {
-	backface-visibility: hidden;
-	background: #ffffff none repeat scroll 0 0;
-	content: "";
-	height: 2px;
-	margin-top: -1px;
-	position: absolute;
-	top: 50%;
-	transition: width 0.3s ease 0s, transform 0.3s ease 0s;
-	width: 9px;
-}
-
-#jxp-debug-console .dropdown-trigger.dropdown-is-active {
-	background-color: #3f8654;
-}
-#jxp-debug-console .dropdown-trigger {
-	font-size: 1.5rem;
-}
-#jxp-debug-console .dropdown-trigger {
+.jxp-console-trigger {
+	display: inline-block;
+	position: relative;
+	height: 40px;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	padding: 0 36px 0 20px;
+	line-height: 40px;
 	background-color: #111433;
 	color: #ffffff;
-	display: block;
-	line-height: 40px;
-	padding: 0 36px 0 20px;
-	position: relative;
+	width: 100%;
 }
 
-#jxp-debug-console a {
-	color: #3f8654;
-	text-decoration: none;
+.jxp-console-trigger:hover {
+	background-color: #171b46;
 }
 
-#jxp-debug-console .dropdown-is-active {
+.jxp-console-trigger::before, .jxp-console-trigger::after {
+	/* this is the arrow inside the dropdown trigger*/
+	content: '';
+	position: absolute;
+	top: 50%;
+	margin-top: -1px;
+	height: 2px;
+	width: 9px;
+	background: #ffffff;
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+	-webkit-transition: width 0.3s, -webkit-transform 0.3s;
+	-moz-transition: width 0.3s, -moz-transform 0.3s;
+	transition: width 0.3s, transform 0.3s;
+}
+
+.jxp-console-trigger::before {
+	right: 72px;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-ms-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	transform: rotate(-45deg);
+}
+.jxp-console-trigger::after {
+	right: 77px;
+	-webkit-transform: rotate(45deg);
+	-moz-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	-o-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+.jxp-console-trigger.close::after, .jxp-console-trigger.close::before {
+	/* this is the 'X' icon */
+	content: '';
+	/*position: absolute;*/
+	/*left: 50%;*/
+	top: 40%;
+	bottom: auto;
+	right: 75px;
+	/*-webkit-transform: translateX(-50%) translateY(-50%);
+	-moz-transform: translateX(-50%) translateY(-50%);
+	-ms-transform: translateX(-50%) translateY(-50%);
+	-o-transform: translateX(-50%) translateY(-50%);
+	transform: translateX(-50%) translateY(-50%);*/
+	height: 16px;
+	width: 2px;
 	background-color: #ffffff;
-	box-shadow: 0 2px 14px rgba(0, 0, 0, 0.1);
-	height: auto;
-	left: 100%;
-	transform: translateX(0px);
+}
+.jxp-console-trigger.close::after {
+	-webkit-transform: translateX(0) translateY(0) rotate(45deg);
+	-moz-transform: translateX(0) translateY(0) rotate(45deg);
+	-ms-transform: translateX(0) translateY(0) rotate(45deg);
+	-o-transform: translateX(0) translateY(0) rotate(45deg);
+	transform: translateX(0) translateY(0) rotate(45deg);
+}
+.jxp-console-trigger.close::before {
+	-webkit-transform: translateX(0) translateY(0) rotate(-45deg);
+	-moz-transform: translateX(0) translateY(0) rotate(-45deg);
+	-ms-transform: translateX(0) translateY(0) rotate(-45deg);
+	-o-transform: translateX(0) translateY(0) rotate(-45deg);
+	transform: translateX(0) translateY(0) rotate(-45deg);
 }
 
-#jxp-debug-console .dropdown-content.dropdown-is-active,
-#jxp-debug-console .dropdown-content ul.is-hidden {
-	-webkit-transform: translateX(100%);
-	-moz-transform: translateX(100%);
-	-ms-transform: translateX(100%);
-	-o-transform: translateX(100%);
-	transform: translateX(100%);
-}
-
-#jxp-debug-console .dropdown-content.is-hidden,
-#jxp-debug-console .dropdown-content ul.is-hidden {
-	-webkit-transform: translateX(100%);
-	-moz-transform: translateX(100%);
-	-ms-transform: translateX(100%);
-	-o-transform: translateX(100%);
-	transform: translateX(100%);
-}
-
-#jxp-debug-console .dropdown.dropdown-is-active {
-	visibility: visible;
-	-webkit-transform: translateY(0);
-	-moz-transform: translateY(0);
-	-ms-transform: translateY(0);
-	-o-transform: translateY(0);
-	transform: translateY(0);
-	-webkit-transition: -webkit-transform 0.5s 0s, visibility 0s 0s;
-	-moz-transition: -moz-transform 0.5s 0s, visibility 0s 0s;
-	transition: transform 0.5s 0s, visibility 0s 0s;
-}
-
-#jxp-debug-console .dropdown-is-active .dropdown-content,
-#jxp-debug-console .dropdown-is-active .dropdown-content ul {
-	-webkit-overflow-scrolling: touch;
-}
-
-#jxp-debug-console .dropdown-content.is-hidden > li > a,
-#jxp-debug-console .dropdown-content.move-out > li > a,
-#jxp-debug-console .dropdown-content ul.is-hidden > li > a,
-#jxp-debug-console .dropdown-content ul.move-out > li > a {
-	opacity: 0;
-}
-
-@media only screen and (min-width: 1024px) {
-	#jxp-debug-console .dropdown-trigger {
-		font-size: 1.5rem;
-	}
-	#jxp-debug-console .dropdown-trigger.dropdown-is-active {
-		background-color: #3f8654;
-	}
-	#jxp-debug-console .no-touch .cd-dropdown-trigger.dropdown-is-active:hover {
-		background-color: #47975f;
-	}
-	#jxp-debug-console .dropdown-trigger.dropdown-is-active::before,
-	#jxp-debug-console .dropdown-trigger.dropdown-is-active::after {
-		width: 14px;
-	}
-	#jxp-debug-console .dropdown-trigger.dropdown-is-active::before {
-		-webkit-transform: translateX(5px) rotate(-45deg);
-		-moz-transform: translateX(5px) rotate(-45deg);
-		-ms-transform: translateX(5px) rotate(-45deg);
-		-o-transform: translateX(5px) rotate(-45deg);
-		transform: translateX(5px) rotate(-45deg);
-	}
-	#jxp-debug-console .dropdown-trigger.dropdown-is-active::after {
-		-webkit-transform: rotate(45deg);
-		-moz-transform: rotate(45deg);
-		-ms-transform: rotate(45deg);
-		-o-transform: rotate(45deg);
-		transform: rotate(45deg);
-	}
-}
-
-@media only screen and (min-width: 1024px) {
-
-	#jxp-debug-console .dropdown.dropdown-is-active {
-		opacity: 1;
-		-webkit-transform: translateY(0);
-		-moz-transform: translateY(0);
-		-ms-transform: translateY(0);
-		-o-transform: translateY(0);
-		transform: translateY(0);
-		-webkit-transition: opacity 0.3s 0s, visibility 0.3s 0s, -webkit-transform 0.3s 0s;
-		-moz-transition: opacity 0.3s 0s, visibility 0.3s 0s, -moz-transform 0.3s 0s;
-		transition: opacity 0.3s 0s, visibility 0.3s 0s, transform 0.3s 0s;
-	}
+.jxp-console-wrapper .jxp-console-dropdown-content li {
+	padding: 7px;
+	line-height: 1rem;
+	display: block;
+	color: #ffffff;
 }
