@@ -136,8 +136,8 @@
 
 		var comet = new iComet({
 			channel: 'abc',
-			signUrl: 'http://52.8.189.179:8000/sign',
-			subUrl: 'http://52.8.189.179:8100/sub',
+			signUrl: 'http://10.0.12.13:8000/sign',
+			subUrl: 'http://10.0.12.13:8100/sub',
 			callback: function(content){
 				// on server push
 				alert(content);
