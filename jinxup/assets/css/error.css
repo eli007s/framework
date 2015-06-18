@@ -5,7 +5,8 @@
 	top: 0;
 	overflow: hidden;
 	background: #2a2e30;
-	font-family: 'Open Sans', Arial;
+	/*font-family: 'Open Sans', Arial;*/
+	font-family: "Gotham Narrow A","Gotham Narrow B","Gotham Narrow","Helvetica","Helvetica Neue","Arial",sans-serif;
 }
 
 .jxp-console-dropdown-content, .jxp-console-content, .jxp-console-content .column {
