@@ -79,7 +79,7 @@
 					$vars = $_vars['app'];
 
 				$_vars['app'] = array(
-					'active'     => JXP_Application::getActive(),
+					'name'       => JXP_Application::getActive(),
 					'controller' => JXP_Routes::getController(),
 					'action'     => JXP_Routes::getActionCall(),
 					'assets'     => JXP_Application::getWebPath('assets'),
