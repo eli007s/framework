@@ -3,6 +3,7 @@
 	class JXP_Config
 	{
 		private static $_config = array();
+		private static $_regEx  = '@(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|((?<!:)//.*)|[\t\r\n]@i';
 
 		public static function get($key = null)
 		{
@@ -18,7 +19,7 @@
 			foreach (JXP_Directory::scan($path, '.tell') as $config)
 			{
 				$contents   = file_get_contents($config);
-				$configTell = self::_filter($contents);
+				$configTell = preg_replace(self::$_regEx, '', $contents);
 				$return     = json_decode($configTell, true);
 			}
 
@@ -28,7 +29,7 @@
 		public static function loadFromFile($file)
 		{
 			$contents   = file_get_contents($file);
-			$configTell = self::_filter($contents);
+			$configTell = preg_replace(self::$_regEx, '', $contents);
 			$return     = json_decode($configTell, true);
 
 			return $return;
@@ -113,10 +114,5 @@
 			}
 
 			return self::$_config;
-		}
-
-		private static function _filter($string)
-		{
-			return preg_replace('/([?!http|ftp]\/\/|\/\*|#)(.*)(\*\/|\n|\r)/', '', $string);
 		}
 	}

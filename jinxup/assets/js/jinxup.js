@@ -1,4 +1,4 @@
-var Jinxup = function(data) {
+var Jinxup = function() {
 
 	$.ajaxPrefilter(function (options, originalOptions, jqXHR) {
 
@@ -10,79 +10,74 @@ var Jinxup = function(data) {
 		}
 	});
 
-	var _thisUser, _channels = {}, _socket = null;
-
+	var _socket      = null;
+	var channels     = {};
 	var _checkSocket = function() {
-		console.log(socketCluser);
-		if (typeof socketCluser == 'object') {
-console.log(typeof _socket);
-			if (typeof _socket != null) {
 
-				_socket = socketCluster.connect(function(data) {
+		var args = Array.prototype.slice.call(arguments)
 
-					console.log(data);
-				});
+		if (args.length >= 1) {
 
-				console.log(_socket);
+			if (typeof socketCluster == 'object') {
 
-				_socket.on('connect', function(data) {
+				if (_socket == null) {
 
-					_thisUser = data.id;
-				});
-			}
+					_socket = socketCluster.connect(/*{
 
-			return true;
+					 autoReconnectOptions: {
 
-		} else {
+					 initialDelay: 1000,
+					 randomness  : 1000,
+					 maxDelay    : 4000
+					 }
+					 }*/);
 
-			return false;
-		}
-	};
+					_socket.on('connect', function(data) {
 
-	var _join = function(channel, callback) {
+						var socketID = data.id;
+						var _data    = [];
 
-		if (_checkSocket()) {
+						switch (args[0]) {
 
-			if (typeof _channels[channel] == 'undefined') {
+							case 'emit' :
 
-				//_channels[channel] = _socket.subscribe(channel);
+								_socket.emit(args[1], args[2]);
 
-				//_socket.watch(channel, callback);
-			}
-		}
-	};
+								break;
 
-	var _on = function(event, callback) {
+							case 'join' :
 
-		if (_checkSocket) {
+								channels[args[1]] = _socket.subscribe(args[1]);
 
-			if (event == 'connect') {
+								channels[args[1]].watch(args[2]);
 
-				_socket.on(event, callback);
+								return channels[args[1]];
+
+								break;
+						}
+					});
+
+					_socket.on('subscribe', function(_data) {
+
+						//console.log(_data);
+					});
+				}
 			}
 		}
 	};
 
 	return {
 
-		id : _thisUser,
-
-		on : function(event, callback) {
-
-			_on(event, callback);
-		},
-
 		join : function(channel, callback) {
 
-			_join(channel, callback);
+			return _checkSocket('join', channel, callback);
+			//console.log(channels);
+			//channels['main'].publish('test');
 		}
 	};
 };
 
-var jinxup = new Jinxup({
-
-	data : { hello : 'world' }
-});
+var jinxup = new Jinxup();
 
 /*
  var socket = socketCluster.connect();
