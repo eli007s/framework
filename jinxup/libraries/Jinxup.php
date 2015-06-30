@@ -16,7 +16,7 @@
 		{
 			if (!defined('DS'))
 				define('DS', DIRECTORY_SEPARATOR);
-			
+
 			self::$_thisPath = dirname(__DIR__);
 
 			$root = explode(DS, dirname(dirname(__DIR__)));
@@ -197,7 +197,7 @@
 
 				} else {
 
-					self::_logExit('file');
+					self::_logExit('file', __LINE__);
 				}
 
 			} else {
