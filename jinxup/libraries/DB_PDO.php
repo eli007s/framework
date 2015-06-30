@@ -78,7 +78,7 @@
 		{
 			$hash = is_null($hash) ? $this->_hash : $hash;
 
-			return $this->_log[$hash];
+			return is_null($hash) ? $this->_log : $this->_log[$hash];
 		}
 
 		public function clearLog($hash = null)

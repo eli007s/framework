@@ -42,23 +42,25 @@
 			$error = error_get_last();
 
 			if (!is_null($error))
-			{
-				JXP_View::set('fatalError', true);
-
 				self::log($error['type'], $error['message'], $error['file'], $error['line'], array());
-			}
 
 			if (!empty(self::$_error) && self::$_showErrors === true)
 			{
+				self::$_error['server']   = array_chunk($_SERVER, 9, true);
+				self::$_error['sessions'] = $_SESSION;
+				self::$_error['cookies']  = $_COOKIE;
+				self::$_error['vars']     = JXP_View::getTemplateVars();
+				self::$_error['queries']  = JXP_DB::log();
+
 				JXP_View::setPath('views', Jinxup::installPath() . DS . 'views');
-				JXP_View::set('errors', self::$_error);
-				JXP_View::render('error.tpl');
+				JXP_View::set('debug', self::$_error);
+				JXP_View::render('debug.tpl');
 			}
 		}
 
 		public static function log($errNo, $errMsg, $fileName, $lineNum, $vars)
 		{
-			self::$_error[] = array(
+			self::$_error['exceptions'][] = array(
 				'type'   => self::$errorType[$errNo],
 				'time'   => date('Y-m-d H:i:s (T)'),
 				'num'    => $errNo,
