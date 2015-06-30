@@ -179,7 +179,6 @@ SetEnvIf brokenvary 1 force-no-vary
   Options +FollowSymlinks
   Options +SymLinksIfOwnerMatch
   RewriteEngine On
-  RewriteBase /
 </IfModule>
 
 <IfModule mod_rewrite.c>

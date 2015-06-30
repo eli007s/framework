@@ -222,22 +222,18 @@
 
 			if (!empty($params))
 			{
-				if ($params[0] != self::$_rootDir)
+				if ($params[0] == self::$_rootDir)
+					array_shift($params);
+
+				if ($params[0] != '-')
 				{
-					if ($params[0] != '-')
-					{
-						$prefix = is_numeric($params[0][0]) ? 'n' : null;
-						$prefix = $params[0][0] == '_' ? 'u' : $prefix;
-						$prefix = $params[0][0] == '-' ? 'd' : $prefix;
+					$prefix = is_numeric($params[0][0]) ? 'n' : null;
+					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
+					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
 
-						$controller = $prefix . str_replace('-', '_', array_shift($params)) . '_Controller';
+					$controller = $prefix . str_replace('-', '_', array_shift($params)) . '_Controller';
 
-						self::$_routes['controller'] = $controller;
-
-					} else {
-
-						array_shift($params);
-					}
+					self::$_routes['controller'] = $controller;
 
 				} else {
 
