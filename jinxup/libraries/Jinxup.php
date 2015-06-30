@@ -9,11 +9,16 @@
 		private static $_apps       = array();
 		private static $_loadedApps = array();
 		private static $_thisPath   = null;
+		private static $_rootDir    = null;
 		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
 		{
 			self::$_thisPath = dirname(__DIR__);
+
+			$root = explode(DS, dirname(dirname(__DIR__)));
+
+			self::$_rootDir = end($root);
 
 			if (!defined('DS'))
 				define('DS', DIRECTORY_SEPARATOR);
@@ -38,7 +43,7 @@
 				self::$_init = 'loaded';
 			}
 		}
-		
+
 		public static function load($app)
 		{
 			if (!in_array($app, self::$_loadedApps))
@@ -59,7 +64,7 @@
 				self::stop();
 			}
 		}
-		
+
 		public static function stop()
 		{
 			exit;
@@ -217,15 +222,22 @@
 
 			if (!empty($params))
 			{
-				if ($params[0] != '-')
+				if ($params[0] != self::$_rootDir)
 				{
-					$prefix = is_numeric($params[0][0]) ? 'n' : null;
-					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
-					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
+					if ($params[0] != '-')
+					{
+						$prefix = is_numeric($params[0][0]) ? 'n' : null;
+						$prefix = $params[0][0] == '_' ? 'u' : $prefix;
+						$prefix = $params[0][0] == '-' ? 'd' : $prefix;
 
-					$controller = $prefix . str_replace('-', '_', array_shift($params)) . '_Controller';
+						$controller = $prefix . str_replace('-', '_', array_shift($params)) . '_Controller';
 
-					self::$_routes['controller'] = $controller;
+						self::$_routes['controller'] = $controller;
+
+					} else {
+
+						array_shift($params);
+					}
 
 				} else {
 
@@ -293,7 +305,7 @@
 					if (isset($config['domains']))
 					{
 						// TODO: set activeApp from domain settings
-						
+
 						unset(self::$_config['domains']);
 
 					} else {
@@ -314,7 +326,7 @@
 						if (!is_null($forceApp))
 						{
 							chdir(dirname(dirname(self::$_app['path'])));
-							
+
 							$activeApp = $forceApp;
 						}
 
@@ -465,7 +477,7 @@
 						foreach ($catch as $key => $value)
 						{
 							$_c = $catch[$key];
-							
+
 							if ($key == '*' || $key == 'all' || $key == $errorCode)
 							{
 								if (is_array($_c))
@@ -479,7 +491,7 @@
 										{
 											case 'redirect':
 											case 'location':
-												
+
 												$location = isset($_c['redirect']) ? $_c['redirect'] : $_c['location'];
 
 												if (strlen($location) > 0)
@@ -567,13 +579,13 @@
 
 												break;
 										}
-										
+
 										if ($breakError === true)
 											break;
 									}
-								
+
 								} else {
-									
+
 									$errorTpl = trim($_c, '/');
 								}
 							}
