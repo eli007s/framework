@@ -14,14 +14,14 @@
 
 		public function __construct()
 		{
+			if (!defined('DS'))
+				define('DS', DIRECTORY_SEPARATOR);
+			
 			self::$_thisPath = dirname(__DIR__);
 
 			$root = explode(DS, dirname(dirname(__DIR__)));
 
 			self::$_rootDir = end($root);
-
-			if (!defined('DS'))
-				define('DS', DIRECTORY_SEPARATOR);
 
 			self::_autoload();
 
