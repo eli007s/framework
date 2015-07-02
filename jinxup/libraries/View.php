@@ -83,7 +83,8 @@
 					'controller' => JXP_Routes::getController(),
 					'action'     => JXP_Routes::getActionCall(),
 					'assets'     => JXP_Application::getWebPath('assets'),
-					'param'      => JXP_Routes::getParams()
+					'param'      => JXP_Routes::getParams(),
+					'config'     => Jinxup::config()
 				);
 
 				$_vars['app'] = array_merge($_vars['app'], $vars);
