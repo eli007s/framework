@@ -19,10 +19,6 @@
 
 			self::$_thisPath = dirname(__DIR__);
 
-			$root = explode(DS, dirname(dirname(__DIR__)));
-
-			self::$_rootDir = end($root);
-
 			self::_autoload();
 
 			JXP_Error::register(E_ALL);
@@ -222,10 +218,10 @@
 
 			if (!empty($params))
 			{
-				if ($params[0] == self::$_rootDir)
+				if ($params[0] == JXP_Routes::$prefix)
 					array_shift($params);
 
-				if ($params[0] != '-')
+				if ($params[0] != '-' && !empty($params))
 				{
 					$prefix = is_numeric($params[0][0]) ? 'n' : null;
 					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
@@ -394,7 +390,7 @@
 					if (method_exists($bootstrap, 'onConstruct') && is_callable(array($bootstrap, 'onConstruct')))
 						$bootstrap->onConstruct();
 				}
-
+				
 				if (class_exists($routes['controller']))
 				{
 					$c = new $routes['controller']();
