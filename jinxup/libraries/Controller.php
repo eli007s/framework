@@ -28,7 +28,7 @@
 				JXP_Error::render(800);
 			}
 
-			return new self();
+			return self::$_controller['name'];
 		}
 
 		public static function __callStatic($name, $params)

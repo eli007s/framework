@@ -390,7 +390,7 @@
 					if (method_exists($bootstrap, 'onConstruct') && is_callable(array($bootstrap, 'onConstruct')))
 						$bootstrap->onConstruct();
 				}
-				
+
 				if (class_exists($routes['controller']))
 				{
 					$c = new $routes['controller']();
