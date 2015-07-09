@@ -4,7 +4,10 @@
 	{
 		public static function sHash($value, $salt = null, $algo = 'sha512', $output = false)
 		{
-			$hash = self::hash($value, $salt, $algo);
+			$hash = self::hash($value, $salt, $algo, $output);
+
+			if (!is_array($hash))
+				$hash = array($hash);
 
 			foreach ($hash as $key => $val)
 			{
@@ -34,14 +37,14 @@
 			return self::_pbkdf2($algo, $hash, $secret, 1985, $blockSize, $output);
 		}
 
-		private static function _pbkdf2($algo, $data, $salt, $count, $length, $output)
+		private static function _pbkdf2($algo, $data, $salt, $count, $length, $raw_output)
 		{
 			if (function_exists('hash_pbkdf2'))
 			{
-				if (!$output)
+				if (!$raw_output)
 					$length *= 2;
 
-				return hash_pbkdf2($algo, $data, $salt, $count, $length, $output);
+				return hash_pbkdf2($algo, $data, $salt, $count, $length, $raw_output);
 			}
 
 			$hash_length = strlen(hash($algo, '', true));
@@ -60,7 +63,7 @@
 				$output .= $xorsum;
 			}
 
-			return $output ? substr($output, 0, $length) : bin2hex(substr($output, 0, $length));
+			return $raw_output === true ? substr($output, 0, $length) : bin2hex(substr($output, 0, $length));
 		}
 
 		public static function createSignature($data, $secret)
