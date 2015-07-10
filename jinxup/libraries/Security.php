@@ -21,12 +21,14 @@
 			return $hash;
 		}
 
-		private static function _hash($algo, $data, $secret, $output = false, $blockSize = 64, $opad = 0x5c, $ipad = 0x36)
+		private static function _hash($algo, $data, $secret, $binary = false)
 		{
-			$secret    = str_pad($secret, $blockSize, chr(0x00), STR_PAD_RIGHT);
+			$opad      = 0x5c;
+			$ipad      = 0x36;
+			$secret    = str_pad($secret, 64, chr(0x00), STR_PAD_RIGHT);
 			$o_key_pad = $i_key_pad = '';
 
-			for ($i = 0; $i < $blockSize; $i++)
+			for ($i = 0; $i < 64; $i++)
 			{
 				$o_key_pad .= chr(ord(substr($secret, $i, 1)) ^ $opad);
 				$i_key_pad .= chr(ord(substr($secret, $i, 1)) ^ $ipad);
@@ -34,20 +36,23 @@
 
 			$hash = hash_hmac($algo, $o_key_pad . hash_hmac($algo, $i_key_pad . $data, true), true);
 
-			return self::_pbkdf2($algo, $hash, $secret, 1985, $blockSize, $output);
+			return self::_pbkdf2($algo, $hash, $secret, $binary);
 		}
 
-		private static function _pbkdf2($algo, $data, $salt, $count, $length, $raw_output)
+		private static function _pbkdf2($algo, $data, $salt, $binary)
 		{
+			$length = 65;
+			$count  = 1985;
+
 			if (function_exists('hash_pbkdf2'))
 			{
-				if (!$raw_output)
-					$length *= 2;
+				if (!$binary)
+					$length = $length * 2;
 
-				return hash_pbkdf2($algo, $data, $salt, $count, $length, $raw_output);
+				return hash_pbkdf2($algo, $data, $salt, 1985, $length, $binary);
 			}
 
-			$hash_length = strlen(hash($algo, '', true));
+			$hash_length = strlen(hash($algo, $data, true));
 			$block_count = ceil($length / $hash_length);
 
 			$output = null;
@@ -58,12 +63,12 @@
 				$last = $xorsum = hash_hmac($algo, $last, $data, true);
 
 				for ($j = 1; $j < $count; $j++)
-					$xorsum ^= ($last = hash_hmac($algo, $last, $data, true));
+					$xorsum ^= $last = hash_hmac($algo, $last, $data, true);
 
 				$output .= $xorsum;
 			}
 
-			return $raw_output === true ? substr($output, 0, $length) : bin2hex(substr($output, 0, $length));
+			return $binary === true ? substr($output, 0, $length) : bin2hex(substr($output, 0, $length));
 		}
 
 		public static function createSignature($data, $secret)
