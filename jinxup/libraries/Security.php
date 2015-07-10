@@ -49,7 +49,7 @@
 				if (!$binary)
 					$length = $length * 2;
 
-				return hash_pbkdf2($algo, $data, $salt, 1985, $length, $binary);
+				return hash_pbkdf2($algo, $data, $salt, $count, $length, $binary);
 			}
 
 			$hash_length = strlen(hash($algo, $data, true));
