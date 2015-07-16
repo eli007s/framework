@@ -98,7 +98,7 @@
 				$app = self::$_app['paths'];
 
 				if (isset($app[$key]))
-					$path = DS . ltrim(JXP_Routes::$prefix . str_replace($_SERVER['DOCUMENT_ROOT'] . DS . JXP_Routes::$prefix, '', getcwd()), DS) . DS . $key;
+					$path = DS . ltrim(JXP_Routes::$prefix . str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd()), DS) . DS . $key;
 			}
 
 			return str_replace(DS, '/', $path);

@@ -198,19 +198,22 @@
 
 			} else {
 
+				$prefix = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
+
+				JXP_Routes::$prefix = trim($prefix, DS);
+
 				self::_prepareRoutes();
 				self::_loadApplication();
 			}
 		}
 
-		private static function _prepareRoutes($_params = array())
+		private static function _prepareRoutes($params = array())
 		{
 			$_params = array_filter(empty($params) ? self::$_routes['params'] : $params);
-			$params  = array();
 
 			foreach ($_params as $key => $value)
 			{
-				$value = preg_replace('/\.php/im', '', $value);
+				$value = preg_replace('/\.(php|php5|html|htm|shtml|jhtml)/im', '', $value);
 
 				if (!is_null($value) || strlen($value) > 0)
 					$params[] = $value;

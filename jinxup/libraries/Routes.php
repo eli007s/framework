@@ -63,11 +63,7 @@
 
 		public static function getURI()
 		{
-			$uri  = str_replace('index.php', '', getenv('PHP_SELF'));
-			$root = explode(DS, dirname(dirname(__DIR__)));
-
-			self::$prefix = str_replace('//', '/', end($root));
-
+			$uri     = str_replace('index.php', '', getenv('PHP_SELF'));
 			$uri     = str_replace($uri, '', getenv('REQUEST_URI'));
 			$request = rawurldecode(trim(parse_url($uri, PHP_URL_PATH), '/'));
 
