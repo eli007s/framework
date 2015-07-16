@@ -8,11 +8,6 @@
 		private static $_using  = null;
 		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
 
-		public function __call($name, $params)
-		{
-			echo $name;
-		}
-
 		public static function setActive($active = null)
 		{
 			self::$_active = $active;
@@ -83,13 +78,12 @@
 
 		public static function getWebPaths()
 		{
-			$paths  = array();
-			$prefix = str_replace('//', '/', JXP_Routes::$prefix);
+			$paths = array();
 
 			if (!empty(self::$_app['paths']))
 			{
 				foreach (self::$_app['paths'] as $key => $val)
-					$paths[$key] = $prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $val));
+					$paths[$key] = self::getWebPath($key);
 			}
 
 			return $paths;
@@ -101,13 +95,12 @@
 
 			if (!empty(self::$_app['paths']))
 			{
-				$app    = self::$_app['paths'];
-				$prefix = str_replace('//', '/', JXP_Routes::$prefix);
+				$app = self::$_app['paths'];
 
 				if (isset($app[$key]))
-					$path = $prefix . str_replace(DS, '/', str_replace(dirname(dirname(getcwd())), '', $app[$key]));
+					$path = DS . ltrim(JXP_Routes::$prefix . str_replace($_SERVER['DOCUMENT_ROOT'] . DS . JXP_Routes::$prefix, '', getcwd()), DS) . DS . $key;
 			}
 
-			return $path;
+			return str_replace(DS, '/', $path);
 		}
 	}
