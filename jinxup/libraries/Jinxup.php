@@ -199,8 +199,9 @@
 			} else {
 
 				$prefix = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
+				$prefix = explode('/', $prefix);
 
-				JXP_Routes::$prefix = trim($prefix, DS);
+				JXP_Routes::$prefix = trim($prefix[0], DS);
 
 				self::_prepareRoutes();
 				self::_loadApplication();
