@@ -304,13 +304,6 @@
 					{
 						$param = null;
 						$type  = null;
-						$float = false;
-
-						if (strpos($bind[$value], '.') !== false)
-						{
-							$bind[$value] = strval($bind[$value]);
-							$float = true;
-						}
 
 						if (is_string($bind[$value]))
 						{
@@ -344,10 +337,7 @@
 
 						$this->_log[$hash]['tokens']['bound'][] = $arr;
 
-						if ($float)
-							$stmt->bindValue(":{$value}", $bind[$value]);
-						else
-							$stmt->bindValue(":{$value}", $bind[$value], $param);
+						$stmt->bindValue(":{$value}", $bind[$value], $param);
 
 					} else {
 
