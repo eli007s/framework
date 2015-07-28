@@ -108,7 +108,7 @@
 				{
 					if (!is_array($value))
 					{
-						$keys[]   = is_string($key) ? '$:' . $key . '$' : '$[?]$';
+						$keys[]   = is_string($key) ? '$:' . $key . '\b$' : '$[?]$';
 						$values[] = is_numeric($value) ? intval($value) : '"' . $value . '"';
 					}
 				}
