@@ -11,7 +11,7 @@
 			if (class_exists($class))
 			{
 				if (!isset(self::$_helper[$class]))
-					self::$_helper[$class] = new $class();
+					self::$_helper[$name] = new $class();
 
 			} else {
 
@@ -31,7 +31,7 @@
 				JXP_View::render($errorTpl);
 			}
 
-			return self::$_helper[$class];
+			return self::$_helper[$name];
 		}
 
 		public static function __callStatic($name, $params)
