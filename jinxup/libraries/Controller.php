@@ -13,8 +13,6 @@
 				if (!isset(self::$_controller[$class]))
 					self::$_controller[$class] = new $class();
 
-				self::$_controller['name'] = $class;
-
 			} else {
 
 				$bt = debug_backtrace();
@@ -28,7 +26,7 @@
 				JXP_Error::render(800);
 			}
 
-			return self::$_controller['name'];
+			return self::$_controller[$class];
 		}
 
 		public static function __callStatic($name, $params)

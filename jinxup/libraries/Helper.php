@@ -6,12 +6,12 @@
 
 		public static function using($name)
 		{
-			$class  = $name . '_Helper';
-			$return = null;
+			$class = $name . '_Helper';
 
 			if (class_exists($class))
 			{
-				$return = new $class();
+				if (!isset(self::$_helper[$class]))
+					self::$_helper[$class] = new $class();
 
 			} else {
 
@@ -31,7 +31,7 @@
 				JXP_View::render($errorTpl);
 			}
 
-			return $return;
+			return self::$_helper[$class];
 		}
 
 		public static function __callStatic($name, $params)
