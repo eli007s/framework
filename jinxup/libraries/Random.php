@@ -2,14 +2,14 @@
 
 	class JXP_Random
 	{
-		private static $_letters = array(
-			'const' => array(
+		private static $_letters = [
+			'const' => [
 				'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'z', 'th', 'st'
-			),
-			'vowel' =>	array(
+			],
+			'vowel' =>	[
 				'a', 'e', 'i', 'o', 'u', 'y', 'ee', 'ie', 'oo', 'ou'
-			)
-		);
+			]
+		];
 
 		public static function word($length = 6)
 		{
@@ -17,7 +17,7 @@
 
 			for ($i = 0; $i < $length; $i++)
 			{
-				foreach(array('const', 'vowel') as $key)
+				foreach(['const', 'vowel'] as $key)
 					$word .= self::$_letters[$key][self::number(0, count(self::$_letters[$key]) - 1)];
 			}
 
@@ -31,7 +31,7 @@
 			return substr(strtoupper($const[self::number(0, count($const) - 1)]), 0, 1);
 		}
 
-		public static function password($length = 8)
+		public static function string($length = 8)
 		{
 			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=!@#$%';
 			$str   = null;
@@ -48,5 +48,36 @@
 			mt_srand($seed === 0 ? microtime() * 1000000 : $seed);
 
 			return mt_rand($min, $max);
+		}
+
+		public static function bytes($count)
+		{
+			$output = '';
+			$random = microtime();
+
+			if (function_exists('getmypid'))
+				$random .= getmypid();
+
+			if (is_readable('/dev/urandom') && ($fh = @fopen('/dev/urandom', 'rb')))
+			{
+				$output = fread($fh, $count);
+
+				fclose($fh);
+			}
+
+			if (strlen($output) < $count)
+			{
+				$output = '';
+
+				for ($i = 0; $i < $count; $i += 16)
+				{
+					$random  = md5(microtime() . $random);
+					$output .= pack('H*', md5($random));
+				}
+
+				$output = substr($output, 0, $count);
+			}
+
+			return $output;
 		}
 	}

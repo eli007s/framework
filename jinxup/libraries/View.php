@@ -78,29 +78,29 @@
 				if (isset($_vars['app']))
 					$vars = $_vars['app'];
 
-				$_vars['app'] = array(
+				$_vars['app'] = [
 					'name'       => JXP_Application::getActive(),
 					'controller' => JXP_Routes::getController(),
 					'action'     => JXP_Routes::getActionCall(),
 					'assets'     => JXP_Application::getWebPath('assets'),
 					'param'      => JXP_Routes::getParams(),
 					'config'     => Jinxup::config()
-				);
+				];
 
 				$_vars['app'] = array_merge($_vars['app'], $vars);
 
-				$vars = array();
+				$vars = [];
 
 				if (isset($_vars['app']))
 					$vars = $_vars['app'];
 
-				$_vars['jxp'] = array(
+				$_vars['jxp'] = [
 					'assets'  => '/jinxup/framework/assets',
 					'session' => isset($_SESSION) ? $_SESSION : array(),
 					'post'    => !empty($_POST) ? $_POST : array(),
 					'routes'  => array('getURI' => JXP_Routes::getURI()),
 					'tracker' => array('getIP' => JXP_Tracker::getIP())
-				);
+				];
 
 				$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
 
@@ -122,7 +122,7 @@
 
 		public static function render($tpl)
 		{
-			$_vars = array();
+			$_vars = [];
 
 			if (strpos($tpl, 'app::') !== false)
 			{
