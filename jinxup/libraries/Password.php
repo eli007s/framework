@@ -2,7 +2,7 @@
 
 	class JXP_Password
 	{
-		public static function hash($value, $cost = 4)
+		public static function hash($value, $cost = 10)
 		{
 			$hash = [];
 
