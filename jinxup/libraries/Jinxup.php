@@ -48,6 +48,7 @@
 				{
 					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
 
+					self::_prepareURI();
 					self::_setApplication($app);
 					self::_autoload();
 					self::_runRoutes();
