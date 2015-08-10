@@ -31,7 +31,7 @@
 			$_hash    = '$2y$';
 			$explode = explode('::', $hash);
 
-			if (strlen($explode[1]) < 12)
+			if (strlen($explode[1]) < 8)
 				$_hash .= '0' . (strlen($explode[1]) + 2);
 			else
 				$_hash .= strlen($explode[1]) + 2;
