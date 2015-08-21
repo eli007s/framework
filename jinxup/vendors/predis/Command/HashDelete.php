@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/hdel
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class HashDelete extends PrefixableCommand
+class HashDelete extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class HashDelete extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         return self::normalizeVariadic($arguments);
     }

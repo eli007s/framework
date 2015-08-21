@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/bitcount
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class StringBitCount extends PrefixableCommand
+class StringBitCount extends Command
 {
     /**
      * {@inheritdoc}

@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/ping
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ConnectionPing extends AbstractCommand
+class ConnectionPing extends Command
 {
     /**
      * {@inheritdoc}
@@ -23,13 +24,5 @@ class ConnectionPing extends AbstractCommand
     public function getId()
     {
         return 'PING';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function parseResponse($data)
-    {
-        return $data === 'PONG' ? true : false;
     }
 }

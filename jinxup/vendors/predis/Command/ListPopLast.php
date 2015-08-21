@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/rpop
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ListPopLast extends PrefixableCommand
+class ListPopLast extends Command
 {
     /**
      * {@inheritdoc}

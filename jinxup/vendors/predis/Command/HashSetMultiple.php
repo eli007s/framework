@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/hmset
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class HashSetMultiple extends PrefixableCommand
+class HashSetMultiple extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class HashSetMultiple extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         if (count($arguments) === 2 && is_array($arguments[1])) {
             $flattenedKVs = array($arguments[0]);

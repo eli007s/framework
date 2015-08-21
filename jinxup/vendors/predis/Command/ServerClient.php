@@ -12,10 +12,14 @@
 namespace Predis\Command;
 
 /**
- * @link http://redis.io/commands/client
+ * @link http://redis.io/commands/client-list
+ * @link http://redis.io/commands/client-kill
+ * @link http://redis.io/commands/client-getname
+ * @link http://redis.io/commands/client-setname
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ServerClient extends AbstractCommand
+class ServerClient extends Command
 {
     /**
      * {@inheritdoc}
@@ -44,10 +48,10 @@ class ServerClient extends AbstractCommand
     }
 
     /**
-     * Parses the reply buffer and returns the list of clients returned by
-     * the CLIENT LIST command.
+     * Parses the response to CLIENT LIST and returns a structured list.
      *
-     * @param string $data Reply buffer
+     * @param string $data Response buffer.
+     *
      * @return array
      */
     protected function parseClientList($data)

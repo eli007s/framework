@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/zrange
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ZSetRange extends PrefixableCommand
+class ZSetRange extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class ZSetRange extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         if (count($arguments) === 4) {
             $lastType = gettype($arguments[3]);
@@ -41,6 +42,7 @@ class ZSetRange extends PrefixableCommand
 
             if ($lastType === 'array') {
                 $options = $this->prepareOptions(array_pop($arguments));
+
                 return array_merge($arguments, $options);
             }
         }
@@ -52,6 +54,7 @@ class ZSetRange extends PrefixableCommand
      * Returns a list of options and modifiers compatible with Redis.
      *
      * @param array $options List of options.
+     *
      * @return array
      */
     protected function prepareOptions($options)
@@ -69,7 +72,7 @@ class ZSetRange extends PrefixableCommand
     /**
      * Checks for the presence of the WITHSCORES modifier.
      *
-     * @return Boolean
+     * @return bool
      */
     protected function withScores()
     {
@@ -90,8 +93,8 @@ class ZSetRange extends PrefixableCommand
         if ($this->withScores()) {
             $result = array();
 
-            for ($i = 0; $i < count($data); $i++) {
-                $result[] = array($data[$i], $data[++$i]);
+            for ($i = 0; $i < count($data); ++$i) {
+                $result[$data[$i]] = $data[++$i];
             }
 
             return $result;

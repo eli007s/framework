@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/decrby
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class StringDecrementBy extends PrefixableCommand
+class StringDecrementBy extends Command
 {
     /**
      * {@inheritdoc}

@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/rpush
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ListPushTail extends PrefixableCommand
+class ListPushTail extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class ListPushTail extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         return self::normalizeVariadic($arguments);
     }

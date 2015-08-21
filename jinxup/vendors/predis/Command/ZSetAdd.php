@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/zadd
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ZSetAdd extends PrefixableCommand
+class ZSetAdd extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,17 +29,13 @@ class ZSetAdd extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
-        if (count($arguments) === 2 && is_array($arguments[1])) {
-            $flattened = array($arguments[0]);
-
-            foreach($arguments[1] as $member => $score) {
-                $flattened[] = $score;
-                $flattened[] = $member;
+        if (is_array(end($arguments))) {
+            foreach (array_pop($arguments) as $member => $score) {
+                $arguments[] = $score;
+                $arguments[] = $member;
             }
-
-            return $flattened;
         }
 
         return $arguments;

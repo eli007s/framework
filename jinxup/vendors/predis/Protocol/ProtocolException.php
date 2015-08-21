@@ -14,8 +14,8 @@ namespace Predis\Protocol;
 use Predis\CommunicationException;
 
 /**
- * Exception class that identifies errors encountered while
- * handling the Redis wire protocol.
+ * Exception used to indentify errors encountered while parsing the Redis wire
+ * protocol.
  *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */

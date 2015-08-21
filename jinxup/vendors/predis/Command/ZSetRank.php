@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/zrank
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ZSetRank extends PrefixableCommand
+class ZSetRank extends Command
 {
     /**
      * {@inheritdoc}

@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/sort
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class KeySort extends AbstractCommand implements PrefixableCommandInterface
+class KeySort extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class KeySort extends AbstractCommand implements PrefixableCommandInterface
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         if (count($arguments) === 1) {
             return $arguments;
@@ -59,7 +60,6 @@ class KeySort extends AbstractCommand implements PrefixableCommandInterface
         if (isset($sortParams['LIMIT']) &&
             is_array($sortParams['LIMIT']) &&
             count($sortParams['LIMIT']) == 2) {
-
             $query[] = 'LIMIT';
             $query[] = $sortParams['LIMIT'][0];
             $query[] = $sortParams['LIMIT'][1];
@@ -79,39 +79,5 @@ class KeySort extends AbstractCommand implements PrefixableCommandInterface
         }
 
         return $query;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function prefixKeys($prefix)
-    {
-        if ($arguments = $this->getArguments()) {
-            $arguments[0] = "$prefix{$arguments[0]}";
-
-            if (($count = count($arguments)) > 1) {
-                for ($i = 1; $i < $count; $i++) {
-                    switch ($arguments[$i]) {
-                        case 'BY':
-                        case 'STORE':
-                            $arguments[$i] = "$prefix{$arguments[++$i]}";
-                            break;
-
-                        case 'GET':
-                            $value = $arguments[++$i];
-                            if ($value !== '#') {
-                                $arguments[$i] = "$prefix$value";
-                            }
-                            break;
-
-                        case 'LIMIT';
-                            $i += 2;
-                            break;
-                    }
-                }
-            }
-
-            $this->setRawArguments($arguments);
-        }
     }
 }

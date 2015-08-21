@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/watch
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class TransactionWatch extends AbstractCommand implements PrefixableCommandInterface
+class TransactionWatch extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,28 +29,12 @@ class TransactionWatch extends AbstractCommand implements PrefixableCommandInter
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         if (isset($arguments[0]) && is_array($arguments[0])) {
             return $arguments[0];
         }
 
         return $arguments;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function prefixKeys($prefix)
-    {
-        PrefixHelpers::all($this, $prefix);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function parseResponse($data)
-    {
-        return (bool) $data;
     }
 }

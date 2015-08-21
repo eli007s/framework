@@ -11,21 +11,22 @@
 
 namespace Predis\Protocol;
 
-use Predis\Connection\ComposableConnectionInterface;
+use Predis\Connection\CompositeConnectionInterface;
 
 /**
- * Interface that defines a response reader able to parse replies returned by
- * Redis and deserialize them to PHP objects.
+ * Defines a pluggable reader capable of parsing responses returned by Redis and
+ * deserializing them to PHP objects.
  *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
 interface ResponseReaderInterface
 {
     /**
-     * Reads replies from a connection to Redis and deserializes them.
+     * Reads a response from a connection to Redis.
      *
-     * @param ComposableConnectionInterface $connection Connection to Redis.
+     * @param CompositeConnectionInterface $connection Redis connection.
+     *
      * @return mixed
      */
-    public function read(ComposableConnectionInterface $connection);
+    public function read(CompositeConnectionInterface $connection);
 }

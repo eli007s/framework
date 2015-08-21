@@ -13,44 +13,46 @@ namespace Predis\Command;
 
 /**
  * Defines an abstraction representing a Redis command.
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
 interface CommandInterface
 {
     /**
-     * Gets the ID of a Redis command.
+     * Returns the ID of the Redis command. By convention, command identifiers
+     * must always be uppercase.
      *
      * @return string
      */
     public function getId();
 
     /**
-     * Set the hash for the command.
+     * Assign the specified slot to the command for clustering distribution.
      *
-     * @param int $hash Calculated hash.
+     * @param int $slot Slot ID.
      */
-    public function setHash($hash);
+    public function setSlot($slot);
 
     /**
-     * Returns the hash of the command.
+     * Returns the assigned slot of the command for clustering distribution.
      *
-     * @return int
+     * @return int|null
      */
-    public function getHash();
+    public function getSlot();
 
     /**
      * Sets the arguments for the command.
      *
      * @param array $arguments List of arguments.
      */
-    public function setArguments(Array $arguments);
+    public function setArguments(array $arguments);
 
     /**
      * Sets the raw arguments for the command without processing them.
      *
      * @param array $arguments List of arguments.
      */
-    public function setRawArguments(Array $arguments);
+    public function setRawArguments(array $arguments);
 
     /**
      * Gets the arguments of the command.
@@ -62,14 +64,17 @@ interface CommandInterface
     /**
      * Gets the argument of the command at the specified index.
      *
-     * @return array
+     * @param int $index Index of the desired argument.
+     *
+     * @return mixed|null
      */
     public function getArgument($index);
 
     /**
-     * Parses a reply buffer and returns a PHP object.
+     * Parses a raw response and returns a PHP object.
      *
-     * @param string $data Binary string containing the whole reply.
+     * @param string $data Binary string containing the whole response.
+     *
      * @return mixed
      */
     public function parseResponse($data);

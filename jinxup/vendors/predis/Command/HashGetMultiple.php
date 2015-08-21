@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/hmget
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class HashGetMultiple extends PrefixableCommand
+class HashGetMultiple extends Command
 {
     /**
      * {@inheritdoc}
@@ -28,7 +29,7 @@ class HashGetMultiple extends PrefixableCommand
     /**
      * {@inheritdoc}
      */
-    protected function filterArguments(Array $arguments)
+    protected function filterArguments(array $arguments)
     {
         return self::normalizeVariadic($arguments);
     }

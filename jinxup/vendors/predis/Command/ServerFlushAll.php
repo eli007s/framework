@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/flushall
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ServerFlushAll extends AbstractCommand
+class ServerFlushAll extends Command
 {
     /**
      * {@inheritdoc}

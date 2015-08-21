@@ -11,31 +11,30 @@
 
 namespace Predis\Connection;
 
-use Predis\ClientException;
-use Predis\CommunicationException;
-use Predis\NotSupportedException;
 use Predis\Command\CommandInterface;
+use Predis\CommunicationException;
 use Predis\Protocol\ProtocolException;
 
 /**
- * Base class with the common logic used by connection classes to communicate with Redis.
+ * Base class with the common logic used by connection classes to communicate
+ * with Redis.
  *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-abstract class AbstractConnection implements SingleConnectionInterface
+abstract class AbstractConnection implements NodeConnectionInterface
 {
     private $resource;
     private $cachedId;
 
     protected $parameters;
-    protected $initCmds = array();
+    protected $initCommands = array();
 
     /**
-     * @param ConnectionParametersInterface $parameters Parameters used to initialize the connection.
+     * @param ParametersInterface $parameters Initialization parameters for the connection.
      */
-    public function __construct(ConnectionParametersInterface $parameters)
+    public function __construct(ParametersInterface $parameters)
     {
-        $this->parameters = $this->checkParameters($parameters);
+        $this->parameters = $this->assertParameters($parameters);
     }
 
     /**
@@ -50,22 +49,25 @@ abstract class AbstractConnection implements SingleConnectionInterface
     /**
      * Checks some of the parameters used to initialize the connection.
      *
-     * @param ConnectionParametersInterface $parameters Parameters used to initialize the connection.
+     * @param ParametersInterface $parameters Initialization parameters for the connection.
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return ParametersInterface
      */
-    protected function checkParameters(ConnectionParametersInterface $parameters)
+    protected function assertParameters(ParametersInterface $parameters)
     {
         switch ($parameters->scheme) {
-            case 'unix':
-                if (!isset($parameters->path)) {
-                    throw new \InvalidArgumentException('Missing UNIX domain socket path');
-                }
-
             case 'tcp':
-                return $parameters;
+            case 'redis':
+            case 'unix':
+                break;
 
             default:
-                throw new \InvalidArgumentException("Invalid scheme: {$parameters->scheme}");
+                throw new \InvalidArgumentException("Invalid scheme: '$parameters->scheme'.");
         }
+
+        return $parameters;
     }
 
     /**
@@ -73,7 +75,7 @@ abstract class AbstractConnection implements SingleConnectionInterface
      *
      * @return mixed
      */
-    protected abstract function createResource();
+    abstract protected function createResource();
 
     /**
      * {@inheritdoc}
@@ -88,11 +90,13 @@ abstract class AbstractConnection implements SingleConnectionInterface
      */
     public function connect()
     {
-        if ($this->isConnected()) {
-            throw new ClientException('Connection already estabilished');
+        if (!$this->isConnected()) {
+            $this->resource = $this->createResource();
+
+            return true;
         }
 
-        $this->resource = $this->createResource();
+        return false;
     }
 
     /**
@@ -106,9 +110,9 @@ abstract class AbstractConnection implements SingleConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function pushInitCommand(CommandInterface $command)
+    public function addConnectCommand(CommandInterface $command)
     {
-        $this->initCmds[] = $command;
+        $this->initCommands[] = $command;
     }
 
     /**
@@ -116,7 +120,8 @@ abstract class AbstractConnection implements SingleConnectionInterface
      */
     public function executeCommand(CommandInterface $command)
     {
-        $this->writeCommand($command);
+        $this->writeRequest($command);
+
         return $this->readResponse($command);
     }
 
@@ -129,14 +134,39 @@ abstract class AbstractConnection implements SingleConnectionInterface
     }
 
     /**
+     * Helper method that returns an exception message augmented with useful
+     * details from the connection parameters.
+     *
+     * @param string $message Error message.
+     *
+     * @return string
+     */
+    private function createExceptionMessage($message)
+    {
+        $parameters = $this->parameters;
+
+        if ($parameters->scheme === 'unix') {
+            return "$message [$parameters->scheme:$parameters->path]";
+        }
+
+        if (filter_var($parameters->host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            return "$message [$parameters->scheme://[$parameters->host]:$parameters->port]";
+        }
+
+        return "$message [$parameters->scheme://$parameters->host:$parameters->port]";
+    }
+
+    /**
      * Helper method to handle connection errors.
      *
      * @param string $message Error message.
-     * @param int $code Error code.
+     * @param int    $code    Error code.
      */
     protected function onConnectionError($message, $code = null)
     {
-        CommunicationException::handle(new ConnectionException($this, "$message [{$this->parameters->scheme}://{$this->getIdentifier()}]", $code));
+        CommunicationException::handle(
+            new ConnectionException($this, static::createExceptionMessage($message), $code)
+        );
     }
 
     /**
@@ -146,25 +176,9 @@ abstract class AbstractConnection implements SingleConnectionInterface
      */
     protected function onProtocolError($message)
     {
-        CommunicationException::handle(new ProtocolException($this, "$message [{$this->parameters->scheme}://{$this->getIdentifier()}]"));
-    }
-
-    /**
-     * Helper method to handle not supported connection parameters.
-     *
-     * @param string $option Name of the option.
-     * @param mixed $parameters Parameters used to initialize the connection.
-     */
-    protected function onInvalidOption($option, $parameters = null)
-    {
-        $class = get_called_class();
-        $message = "Invalid option for connection $class: $option";
-
-        if (isset($parameters)) {
-            $message .= sprintf(' [%s => %s]', $option, $parameters->{$option});
-        }
-
-        throw new NotSupportedException($message);
+        CommunicationException::handle(
+            new ProtocolException($this, static::createExceptionMessage($message))
+        );
     }
 
     /**
@@ -220,6 +234,6 @@ abstract class AbstractConnection implements SingleConnectionInterface
      */
     public function __sleep()
     {
-        return array('parameters', 'initCmds');
+        return array('parameters', 'initCommands');
     }
 }

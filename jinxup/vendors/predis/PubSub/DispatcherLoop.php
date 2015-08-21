@@ -11,51 +11,51 @@
 
 namespace Predis\PubSub;
 
-use Predis\ClientInterface;
-
 /**
  * Method-dispatcher loop built around the client-side abstraction of a Redis
- * Publish / Subscribe context.
+ * PUB / SUB context.
  *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
 class DispatcherLoop
 {
-    private $pubSubContext;
+    private $pubsub;
 
     protected $callbacks;
     protected $defaultCallback;
     protected $subscriptionCallback;
 
     /**
-     * @param ClientInterface $client Client instance used by the context.
+     * @param Consumer $pubsub PubSub consumer instance used by the loop.
      */
-    public function __construct(ClientInterface $client)
+    public function __construct(Consumer $pubsub)
     {
         $this->callbacks = array();
-        $this->pubSubContext = $client->pubSub();
+        $this->pubsub = $pubsub;
     }
 
     /**
      * Checks if the passed argument is a valid callback.
      *
      * @param mixed $callable A callback.
+     *
+     * @throws \InvalidArgumentException
      */
-    protected function validateCallback($callable)
+    protected function assertCallback($callable)
     {
         if (!is_callable($callable)) {
-            throw new \InvalidArgumentException("A valid callable object must be provided");
+            throw new \InvalidArgumentException('The given argument must be a callable object.');
         }
     }
 
     /**
-     * Returns the underlying Publish / Subscribe context.
+     * Returns the underlying PUB / SUB context.
      *
-     * @return PubSubContext
+     * @return Consumer
      */
-    public function getPubSubContext()
+    public function getPubSubConsumer()
     {
-        return $this->pubSubContext;
+        return $this->pubsub;
     }
 
     /**
@@ -66,7 +66,7 @@ class DispatcherLoop
     public function subscriptionCallback($callable = null)
     {
         if (isset($callable)) {
-            $this->validateCallback($callable);
+            $this->assertCallback($callable);
         }
 
         $this->subscriptionCallback = $callable;
@@ -81,7 +81,7 @@ class DispatcherLoop
     public function defaultCallback($callable = null)
     {
         if (isset($callable)) {
-            $this->validateCallback($callable);
+            $this->assertCallback($callable);
         }
 
         $this->subscriptionCallback = $callable;
@@ -90,16 +90,16 @@ class DispatcherLoop
     /**
      * Binds a callback to a channel.
      *
-     * @param string $channel Channel name.
+     * @param string   $channel  Channel name.
      * @param Callable $callback A callback.
      */
     public function attachCallback($channel, $callback)
     {
-        $callbackName = $this->getPrefixKeys() . $channel;
+        $callbackName = $this->getPrefixKeys().$channel;
 
-        $this->validateCallback($callback);
+        $this->assertCallback($callback);
         $this->callbacks[$callbackName] = $callback;
-        $this->pubSubContext->subscribe($channel);
+        $this->pubsub->subscribe($channel);
     }
 
     /**
@@ -109,11 +109,11 @@ class DispatcherLoop
      */
     public function detachCallback($channel)
     {
-        $callbackName = $this->getPrefixKeys() . $channel;
+        $callbackName = $this->getPrefixKeys().$channel;
 
         if (isset($this->callbacks[$callbackName])) {
             unset($this->callbacks[$callbackName]);
-            $this->pubSubContext->unsubscribe($channel);
+            $this->pubsub->unsubscribe($channel);
         }
     }
 
@@ -122,10 +122,10 @@ class DispatcherLoop
      */
     public function run()
     {
-        foreach ($this->pubSubContext as $message) {
+        foreach ($this->pubsub as $message) {
             $kind = $message->kind;
 
-            if ($kind !== PubSubContext::MESSAGE && $kind !== PubSubContext::PMESSAGE) {
+            if ($kind !== Consumer::MESSAGE && $kind !== Consumer::PMESSAGE) {
                 if (isset($this->subscriptionCallback)) {
                     $callback = $this->subscriptionCallback;
                     call_user_func($callback, $message);
@@ -137,7 +137,7 @@ class DispatcherLoop
             if (isset($this->callbacks[$message->channel])) {
                 $callback = $this->callbacks[$message->channel];
                 call_user_func($callback, $message->payload);
-            } else if (isset($this->defaultCallback)) {
+            } elseif (isset($this->defaultCallback)) {
                 $callback = $this->defaultCallback;
                 call_user_func($callback, $message);
             }
@@ -149,17 +149,17 @@ class DispatcherLoop
      */
     public function stop()
     {
-        $this->pubSubContext->closeContext();
+        $this->pubsub->stop();
     }
 
     /**
-     * Return the prefix of the keys
+     * Return the prefix used for keys.
      *
      * @return string
      */
     protected function getPrefixKeys()
     {
-        $options = $this->pubSubContext->getClient()->getOptions();
+        $options = $this->pubsub->getClient()->getOptions();
 
         if (isset($options->prefix)) {
             return $options->prefix->getPrefix();

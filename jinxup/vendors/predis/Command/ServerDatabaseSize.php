@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/dbsize
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ServerDatabaseSize extends AbstractCommand
+class ServerDatabaseSize extends Command
 {
     /**
      * {@inheritdoc}

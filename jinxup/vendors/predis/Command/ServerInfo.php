@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/info
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ServerInfo extends AbstractCommand
+class ServerInfo extends Command
 {
     /**
      * {@inheritdoc}
@@ -30,35 +31,44 @@ class ServerInfo extends AbstractCommand
      */
     public function parseResponse($data)
     {
-        $info      = array();
+        $info = array();
         $infoLines = preg_split('/\r?\n/', $data);
 
         foreach ($infoLines as $row) {
-            @list($k, $v) = explode(':', $row);
-
-            if ($row === '' || !isset($v)) {
+            if (strpos($row, ':') === false) {
                 continue;
             }
 
-            if (!preg_match('/^db\d+$/', $k)) {
-                if ($k === 'allocation_stats') {
-                    $info[$k] = $this->parseAllocationStats($v);
-                    continue;
-                }
-
-                $info[$k] = $v;
-            } else {
-                $info[$k] = $this->parseDatabaseStats($v);
-            }
+            list($k, $v) = $this->parseRow($row);
+            $info[$k] = $v;
         }
 
         return $info;
     }
 
     /**
-     * Parses the reply buffer and extracts the statistics of each logical DB.
+     * Parses a single row of the response and returns the key-value pair.
      *
-     * @param string $str Reply buffer.
+     * @param string $row Single row of the response.
+     *
+     * @return array
+     */
+    protected function parseRow($row)
+    {
+        list($k, $v) = explode(':', $row, 2);
+
+        if (preg_match('/^db\d+$/', $k)) {
+            $v = $this->parseDatabaseStats($v);
+        }
+
+        return array($k, $v);
+    }
+
+    /**
+     * Extracts the statistics of each logical DB from the string buffer.
+     *
+     * @param string $str Response buffer.
+     *
      * @return array
      */
     protected function parseDatabaseStats($str)
@@ -74,9 +84,10 @@ class ServerInfo extends AbstractCommand
     }
 
     /**
-     * Parses the reply buffer and extracts the allocation statistics.
+     * Parses the response and extracts the allocation statistics.
      *
-     * @param string $str Reply buffer.
+     * @param string $str Response buffer.
+     *
      * @return array
      */
     protected function parseAllocationStats($str)

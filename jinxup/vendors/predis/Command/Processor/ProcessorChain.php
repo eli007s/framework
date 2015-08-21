@@ -18,12 +18,12 @@ use Predis\Command\CommandInterface;
  *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ProcessorChain implements CommandProcessorChainInterface, \ArrayAccess
+class ProcessorChain implements \ArrayAccess, ProcessorInterface
 {
     private $processors = array();
 
     /**
-     * @param array $processors List of instances of CommandProcessorInterface.
+     * @param array $processors List of instances of ProcessorInterface.
      */
     public function __construct($processors = array())
     {
@@ -35,7 +35,7 @@ class ProcessorChain implements CommandProcessorChainInterface, \ArrayAccess
     /**
      * {@inheritdoc}
      */
-    public function add(CommandProcessorInterface $processor)
+    public function add(ProcessorInterface $processor)
     {
         $this->processors[] = $processor;
     }
@@ -43,7 +43,7 @@ class ProcessorChain implements CommandProcessorChainInterface, \ArrayAccess
     /**
      * {@inheritdoc}
      */
-    public function remove(CommandProcessorInterface $processor)
+    public function remove(ProcessorInterface $processor)
     {
         if (false !== $index = array_search($processor, $this->processors, true)) {
             unset($this[$index]);
@@ -55,7 +55,7 @@ class ProcessorChain implements CommandProcessorChainInterface, \ArrayAccess
      */
     public function process(CommandInterface $command)
     {
-        for ($i = 0; $i < $count = count($this->processors); $i++) {
+        for ($i = 0; $i < $count = count($this->processors); ++$i) {
             $this->processors[$i]->process($command);
         }
     }
@@ -109,10 +109,10 @@ class ProcessorChain implements CommandProcessorChainInterface, \ArrayAccess
      */
     public function offsetSet($index, $processor)
     {
-        if (!$processor instanceof CommandProcessorInterface) {
+        if (!$processor instanceof ProcessorInterface) {
             throw new \InvalidArgumentException(
-                'A processor chain can hold only instances of classes implementing '.
-                'the Predis\Command\Processor\CommandProcessorInterface interface'
+                'A processor chain accepts only instances of '.
+                "'Predis\Command\Processor\ProcessorInterface'."
             );
         }
 

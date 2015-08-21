@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/hincrby
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class HashIncrementBy extends PrefixableCommand
+class HashIncrementBy extends Command
 {
     /**
      * {@inheritdoc}

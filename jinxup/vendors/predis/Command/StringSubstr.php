@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/substr
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class StringSubstr extends PrefixableCommand
+class StringSubstr extends Command
 {
     /**
      * {@inheritdoc}

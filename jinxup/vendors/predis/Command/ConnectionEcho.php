@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/echo
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ConnectionEcho extends AbstractCommand
+class ConnectionEcho extends Command
 {
     /**
      * {@inheritdoc}

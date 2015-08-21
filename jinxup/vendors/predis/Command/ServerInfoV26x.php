@@ -13,6 +13,7 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/info
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
 class ServerInfoV26x extends ServerInfo
@@ -22,7 +23,12 @@ class ServerInfoV26x extends ServerInfo
      */
     public function parseResponse($data)
     {
+        if ($data === '') {
+            return array();
+        }
+
         $info = array();
+
         $current = null;
         $infoLines = preg_split('/\r?\n/', $data);
 
@@ -41,18 +47,8 @@ class ServerInfoV26x extends ServerInfo
                 continue;
             }
 
-            list($k, $v) = explode(':', $row);
-
-            if (!preg_match('/^db\d+$/', $k)) {
-                if ($k === 'allocation_stats') {
-                    $current[$k] = $this->parseAllocationStats($v);
-                    continue;
-                }
-
-                $current[$k] = $v;
-            } else {
-                $current[$k] = $this->parseDatabaseStats($v);
-            }
+            list($k, $v) = $this->parseRow($row);
+            $current[$k] = $v;
         }
 
         return $info;

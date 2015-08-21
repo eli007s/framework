@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/zremrangebyrank
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ZSetRemoveRangeByRank extends PrefixableCommand
+class ZSetRemoveRangeByRank extends Command
 {
     /**
      * {@inheritdoc}

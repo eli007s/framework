@@ -11,17 +11,17 @@
 
 namespace Predis\Connection;
 
-use Predis\NotSupportedException;
-use Predis\ResponseError;
 use Predis\Command\CommandInterface;
-use Predis\Connection\ConnectionException;
+use Predis\NotSupportedException;
 use Predis\Protocol\ProtocolException;
+use Predis\Response\Error as ErrorResponse;
+use Predis\Response\Status as StatusResponse;
 
 /**
  * This class implements a Predis connection that actually talks with Webdis
  * instead of connecting directly to Redis. It relies on the cURL extension to
  * communicate with the web server and the phpiredis extension to parse the
- * protocol of the replies returned in the http response bodies.
+ * protocol for responses returned in the http response bodies.
  *
  * Some features are not yet available or they simply cannot be implemented:
  *   - Pipelining commands.
@@ -40,35 +40,37 @@ use Predis\Protocol\ProtocolException;
  * @link http://webd.is
  * @link http://github.com/nicolasff/webdis
  * @link http://github.com/seppo0010/phpiredis
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class WebdisConnection implements SingleConnectionInterface
+class WebdisConnection implements NodeConnectionInterface
 {
-    const ERR_MSG_EXTENSION = 'The %s extension must be loaded in order to be able to use this connection class';
-
     private $parameters;
     private $resource;
     private $reader;
 
     /**
-     * @param ConnectionParametersInterface $parameters Parameters used to initialize the connection.
+     * @param ParametersInterface $parameters Initialization parameters for the connection.
+     *
+     * @throws \InvalidArgumentException
      */
-    public function __construct(ConnectionParametersInterface $parameters)
+    public function __construct(ParametersInterface $parameters)
     {
-        $this->checkExtensions();
+        $this->assertExtensions();
 
         if ($parameters->scheme !== 'http') {
-            throw new \InvalidArgumentException("Invalid scheme: {$parameters->scheme}");
+            throw new \InvalidArgumentException("Invalid scheme: '{$parameters->scheme}'.");
         }
 
         $this->parameters = $parameters;
-        $this->resource = $this->initializeCurl($parameters);
-        $this->reader = $this->initializeReader($parameters);
+
+        $this->resource = $this->createCurl();
+        $this->reader = $this->createReader();
     }
 
     /**
-     * Frees the underlying cURL and protocol reader resources when PHP's
-     * garbage collector kicks in.
+     * Frees the underlying cURL and protocol reader resources when the garbage
+     * collector kicks in.
      */
     public function __destruct()
     {
@@ -78,39 +80,52 @@ class WebdisConnection implements SingleConnectionInterface
 
     /**
      * Helper method used to throw on unsupported methods.
+     *
+     * @param string $method Name of the unsupported method.
+     *
+     * @throws NotSupportedException
      */
-    private function throwNotSupportedException($function)
+    private function throwNotSupportedException($method)
     {
         $class = __CLASS__;
-        throw new NotSupportedException("The method $class::$function() is not supported");
+        throw new NotSupportedException("The method $class::$method() is not supported.");
     }
 
     /**
      * Checks if the cURL and phpiredis extensions are loaded in PHP.
      */
-    private function checkExtensions()
+    private function assertExtensions()
     {
-        if (!function_exists('curl_init')) {
-            throw new NotSupportedException(sprintf(self::ERR_MSG_EXTENSION, 'curl'));
+        if (!extension_loaded('curl')) {
+            throw new NotSupportedException(
+                'The "curl" extension is required by this connection backend.'
+            );
         }
 
-        if (!function_exists('phpiredis_reader_create')) {
-            throw new NotSupportedException(sprintf(self::ERR_MSG_EXTENSION, 'phpiredis'));
+        if (!extension_loaded('phpiredis')) {
+            throw new NotSupportedException(
+                'The "phpiredis" extension is required by this connection backend.'
+            );
         }
     }
 
     /**
      * Initializes cURL.
      *
-     * @param ConnectionParametersInterface $parameters Parameters used to initialize the connection.
      * @return resource
      */
-    private function initializeCurl(ConnectionParametersInterface $parameters)
+    private function createCurl()
     {
+        $parameters = $this->getParameters();
+
+        if (filter_var($host = $parameters->host, FILTER_VALIDATE_IP)) {
+            $host = "[$host]";
+        }
+
         $options = array(
             CURLOPT_FAILONERROR => true,
             CURLOPT_CONNECTTIMEOUT_MS => $parameters->timeout * 1000,
-            CURLOPT_URL => "{$parameters->scheme}://{$parameters->host}:{$parameters->port}",
+            CURLOPT_URL => "$parameters->scheme://$host:$parameters->port",
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_POST => true,
             CURLOPT_WRITEFUNCTION => array($this, 'feedReader'),
@@ -126,12 +141,11 @@ class WebdisConnection implements SingleConnectionInterface
     }
 
     /**
-     * Initializes phpiredis' protocol reader.
+     * Initializes the phpiredis protocol reader.
      *
-     * @param ConnectionParametersInterface $parameters Parameters used to initialize the connection.
      * @return resource
      */
-    private function initializeReader(ConnectionParametersInterface $parameters)
+    private function createReader()
     {
         $reader = phpiredis_reader_create();
 
@@ -142,34 +156,35 @@ class WebdisConnection implements SingleConnectionInterface
     }
 
     /**
-     * Gets the handler used by the protocol reader to handle status replies.
+     * Returns the handler used by the protocol reader for inline responses.
      *
      * @return \Closure
      */
     protected function getStatusHandler()
     {
         return function ($payload) {
-            return $payload === 'OK' ? true : $payload;
+            return StatusResponse::get($payload);
         };
     }
 
     /**
-     * Gets the handler used by the protocol reader to handle Redis errors.
+     * Returns the handler used by the protocol reader for error responses.
      *
      * @return \Closure
      */
     protected function getErrorHandler()
     {
-        return function ($errorMessage) {
-            return new ResponseError($errorMessage);
+        return function ($payload) {
+            return new ErrorResponse($payload);
         };
     }
 
     /**
-     * Feeds phpredis' reader resource with the data read from the network.
+     * Feeds the phpredis reader resource with the data read from the network.
      *
      * @param resource $resource Reader resource.
-     * @param string $buffer Buffer with the reply read from the network.
+     * @param string   $buffer   Buffer of data read from a connection.
+     *
      * @return int
      */
     protected function feedReader($resource, $buffer)
@@ -206,12 +221,15 @@ class WebdisConnection implements SingleConnectionInterface
     /**
      * Checks if the specified command is supported by this connection class.
      *
-     * @param CommandInterface $command The instance of a Redis command.
+     * @param CommandInterface $command Command instance.
+     *
+     * @throws NotSupportedException
+     *
      * @return string
      */
     protected function getCommandId(CommandInterface $command)
     {
-        switch (($commandId = $command->getId())) {
+        switch ($commandID = $command->getId()) {
             case 'AUTH':
             case 'SELECT':
             case 'MULTI':
@@ -220,17 +238,17 @@ class WebdisConnection implements SingleConnectionInterface
             case 'UNWATCH':
             case 'DISCARD':
             case 'MONITOR':
-                throw new NotSupportedException("Disabled command: {$command->getId()}");
+                throw new NotSupportedException("Command '$commandID' is not allowed by Webdis.");
 
             default:
-                return $commandId;
+                return $commandID;
         }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function writeCommand(CommandInterface $command)
+    public function writeRequest(CommandInterface $command)
     {
         $this->throwNotSupportedException(__FUNCTION__);
     }
@@ -263,6 +281,7 @@ class WebdisConnection implements SingleConnectionInterface
         if (curl_exec($resource) === false) {
             $error = curl_error($resource);
             $errno = curl_errno($resource);
+
             throw new ConnectionException($this, trim($error), $errno);
         }
 
@@ -292,7 +311,7 @@ class WebdisConnection implements SingleConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function pushInitCommand(CommandInterface $command)
+    public function addConnectCommand(CommandInterface $command)
     {
         $this->throwNotSupportedException(__FUNCTION__);
     }
@@ -326,10 +345,9 @@ class WebdisConnection implements SingleConnectionInterface
      */
     public function __wakeup()
     {
-        $this->checkExtensions();
-        $parameters = $this->getParameters();
+        $this->assertExtensions();
 
-        $this->resource = $this->initializeCurl($parameters);
-        $this->reader = $this->initializeReader($parameters);
+        $this->resource = $this->createCurl();
+        $this->reader = $this->createReader();
     }
 }

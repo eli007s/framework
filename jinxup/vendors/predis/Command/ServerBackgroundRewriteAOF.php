@@ -13,9 +13,10 @@ namespace Predis\Command;
 
 /**
  * @link http://redis.io/commands/bgrewriteaof
+ *
  * @author Daniele Alessandri <suppakilla@gmail.com>
  */
-class ServerBackgroundRewriteAOF extends AbstractCommand
+class ServerBackgroundRewriteAOF extends Command
 {
     /**
      * {@inheritdoc}
