@@ -3,14 +3,15 @@
 	class JXP_View extends Jinxup
 	{
 		private static $_smarty    = null;
-		private static $_config    = array();
-		private static $_params    = array();
+		private static $_config    = [];
+		private static $_params    = [];
 		private static $_regFilter = true;
-		private static $_paths     = array(
+		private static $_vars      = [];
+		private static $_paths     = [
 			'views'   => 'views',
 			'compile' => '',
 			'plugins' => 'views/plugins'
-		);
+		];
 
 		public static function __callStatic($name, $params)
 		{
@@ -104,6 +105,8 @@
 
 				$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
 
+				self::$_vars = array_merge(self::$_vars, $vars);
+
 				self::$_smarty->assign('app', $_vars['app']);
 				self::$_smarty->assign('jxp', $_vars['jxp']);
 				self::$_smarty->setTemplateDir(self::$_paths['views']);
@@ -116,6 +119,8 @@
 		public static function set($key, $val)
 		{
 			self::_viewInit();
+
+			self::$_vars[$key] = $val;
 
 			self::$_smarty->assign($key, $val);
 		}
@@ -151,11 +156,21 @@
 				}
 			}
 
-			self::viewInit($_vars);
+			self::_viewInit($_vars);
 
 			try
 			{
-				self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
+				if (strpos($tpl, '.php') !== false)
+				{
+					foreach (self::$_vars as $key => $val)
+						$$key = $val;
+
+					require_once self::$_paths['views'] . DS . ltrim($tpl, '/');
+
+				} else {
+
+					self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
+				}
 
 			} catch (SmartyException $e) {
 
