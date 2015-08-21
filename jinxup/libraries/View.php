@@ -57,62 +57,63 @@
 			self::$_config = $config;
 		}
 
-		private static function _viewInit($_vars = array())
+		private static function _viewInit($_vars = [], $smarty = true)
 		{
-			if (is_null(self::$_smarty))
+			$vars = [];
+
+			if (isset($_vars['app']))
+				$vars = $_vars['app'];
+
+			$_vars['app'] = [
+				'name'       => JXP_Application::getActive(),
+				'controller' => JXP_Routes::getController(),
+				'action'     => JXP_Routes::getActionCall(),
+				'assets'     => JXP_Application::getWebPath('assets'),
+				'param'      => JXP_Routes::getParams(),
+				'config'     => Jinxup::config()
+			];
+
+			$_vars['app'] = array_merge($_vars['app'], $vars);
+			$_vars['jxp'] = [
+				'assets'  => '/jinxup/framework/assets',
+				'session' => isset($_SESSION) ? $_SESSION : array(),
+				'post'    => !empty($_POST) ? $_POST : array(),
+				'routes'  => array('getURI' => JXP_Routes::getURI()),
+				'tracker' => array('getIP' => JXP_Tracker::getIP())
+			];
+
+			$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
+
+			self::$_vars = array_merge(self::$_vars, $vars);
+
+			unset($_vars);
+
+			if (is_null(self::$_smarty) && $smarty == true)
 			{
-				require_once(dirname(__DIR__) . DS . 'engines' . DS . 'smarty' . DS . 'Smarty.class.php');
+				$smartyPath = dirname(__DIR__) . DS . 'engines' . DS . 'smarty' . DS . 'Smarty.class.php';
 
-				self::$_smarty                  = new Smarty();
-				self::$_params['app']           = self::getApp();
-				self::$_smarty->left_delimiter  = '{!';
-				self::$_smarty->right_delimiter = '!}';
+				if (file_exists($smartyPath))
+				{
+					require_once($smartyPath);
 
-				if (isset(self::$_config['template']['delimiters']['left']))
-					self::$_smarty->left_delimiter = self::$_config['template']['delimiters']['left'];
+					self::$_smarty                  = new Smarty();
+					self::$_params['app']           = self::getApp();
+					self::$_smarty->left_delimiter  = '{!';
+					self::$_smarty->right_delimiter = '!}';
 
-				if (isset(self::$_config['template']['delimiters']['right']))
-					self::$_smarty->right_delimiter = self::$_config['template']['delimiters']['right'];
+					if (isset(self::$_config['template']['delimiters']['left']))
+						self::$_smarty->left_delimiter = self::$_config['template']['delimiters']['left'];
 
-				$vars = array();
+					if (isset(self::$_config['template']['delimiters']['right']))
+						self::$_smarty->right_delimiter = self::$_config['template']['delimiters']['right'];
 
-				if (isset($_vars['app']))
-					$vars = $_vars['app'];
-
-				$_vars['app'] = [
-					'name'       => JXP_Application::getActive(),
-					'controller' => JXP_Routes::getController(),
-					'action'     => JXP_Routes::getActionCall(),
-					'assets'     => JXP_Application::getWebPath('assets'),
-					'param'      => JXP_Routes::getParams(),
-					'config'     => Jinxup::config()
-				];
-
-				$_vars['app'] = array_merge($_vars['app'], $vars);
-
-				$vars = [];
-
-				if (isset($_vars['app']))
-					$vars = $_vars['app'];
-
-				$_vars['jxp'] = [
-					'assets'  => '/jinxup/framework/assets',
-					'session' => isset($_SESSION) ? $_SESSION : array(),
-					'post'    => !empty($_POST) ? $_POST : array(),
-					'routes'  => array('getURI' => JXP_Routes::getURI()),
-					'tracker' => array('getIP' => JXP_Tracker::getIP())
-				];
-
-				$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
-
-				self::$_vars = array_merge(self::$_vars, $vars);
-
-				self::$_smarty->assign('app', $_vars['app']);
-				self::$_smarty->assign('jxp', $_vars['jxp']);
-				self::$_smarty->setTemplateDir(self::$_paths['views']);
-				self::$_smarty->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
-				self::$_smarty->registerResource('file', new RecompileFileResource());
-				self::$_smarty->muteExpectedErrors();
+					self::$_smarty->assign('app', $_vars['app']);
+					self::$_smarty->assign('jxp', $_vars['jxp']);
+					self::$_smarty->setTemplateDir(self::$_paths['views']);
+					self::$_smarty->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
+					self::$_smarty->registerResource('file', new RecompileFileResource());
+					self::$_smarty->muteExpectedErrors();
+				}
 			}
 		}
 
@@ -156,34 +157,36 @@
 				}
 			}
 
-			self::_viewInit($_vars);
+			self::_viewInit($_vars, false);
 
-			try
+			if (strpos($tpl, '.php') !== false)
 			{
-				if (strpos($tpl, '.php') !== false)
+				foreach (self::$_vars as $key => $val)
+					$$key = $val;
+
+				self::$_vars = [];
+
+				require_once(self::$_paths['views'] . DS . ltrim($tpl, '/'));
+
+			} else {
+
+				try
 				{
-					foreach (self::$_vars as $key => $val)
-						$$key = $val;
-
-					require_once self::$_paths['views'] . DS . ltrim($tpl, '/');
-
-				} else {
-
 					self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
-				}
 
-			} catch (SmartyException $e) {
+				} catch (SmartyException $e) {
 
-				$error = $e->getMessage();
+					$error = $e->getMessage();
 
-				if (preg_match('/Syntax error in template/im', $error, $match))
-				{
-					self::set('error', $e->getMessage());
-					self::_logExit('template_syntax', __LINE__);
+					if (preg_match('/Syntax error in template/im', $error, $match))
+					{
+						self::set('error', $e->getMessage());
+						self::_logExit('template_syntax', __LINE__);
 
-				} else {
+					} else {
 
-					echo $e->getMessage();
+						echo $e->getMessage();
+					}
 				}
 			}
 		}
