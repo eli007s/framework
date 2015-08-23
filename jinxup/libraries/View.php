@@ -162,7 +162,7 @@
 
 			self::_viewInit($_vars, false);
 
-			if (strpos($tpl, '.php') !== false)
+			if (substr($tpl, -4) == '.php')
 			{
 				self::_viewInit($_vars, false);
 
