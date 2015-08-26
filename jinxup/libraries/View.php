@@ -161,6 +161,8 @@
 
 			if (strpos($tpl, '.php') !== false)
 			{
+				self::_viewInit($_vars, false);
+
 				foreach (self::$_vars as $key => $val)
 					$$key = $val;
 
@@ -169,6 +171,8 @@
 				require_once(self::$_paths['views'] . DS . ltrim($tpl, '/'));
 
 			} else {
+
+				self::_viewInit($_vars, true);
 
 				try
 				{
