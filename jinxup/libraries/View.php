@@ -62,7 +62,10 @@
 			$vars = [];
 
 			if (isset($_vars['app']))
-				$vars = $_vars['app'];
+				$vars['app'] = $_vars['app'];
+
+			if (isset($_vars['jxp']))
+				$vars['jxp'] = $_vars['jxp'];
 
 			$_vars['app'] = [
 				'name'       => JXP_Application::getActive(),
@@ -73,7 +76,6 @@
 				'config'     => Jinxup::config()
 			];
 
-			$_vars['app'] = array_merge($_vars['app'], $vars);
 			$_vars['jxp'] = [
 				'assets'  => '/jinxup/framework/assets',
 				'session' => isset($_SESSION) ? $_SESSION : array(),
@@ -82,11 +84,9 @@
 				'tracker' => array('getIP' => JXP_Tracker::getIP())
 			];
 
-			$_vars['jxp'] = array_merge($_vars['jxp'], $vars);
+			$_vars = array_merge($_vars, $vars);
 
 			self::$_vars = array_merge(self::$_vars, $vars);
-
-			unset($_vars);
 
 			if (is_null(self::$_smarty) && $smarty == true)
 			{
@@ -115,6 +115,9 @@
 					self::$_smarty->muteExpectedErrors();
 				}
 			}
+
+			unset($_vars);
+			unset($vars);
 		}
 
 		public static function set($key, $val)
