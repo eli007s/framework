@@ -343,7 +343,7 @@
 				{
 					if (is_dir($app['path']))
 					{
-						if (self::_checkApplicationIntegrity($app['path']))
+						if (self::_checkAppIntegrity($app['path']))
 						{
 							chdir($app['path']);
 
@@ -388,22 +388,26 @@
 				$bootstrap = null;
 				$routes    = self::$_routes;
 
+				$willThrow404 = class_exists($routes['controller']) ? false : true;
+
+				JXP_Application::setWillThrow404($willThrow404);
+
 				if (class_exists('Bootstrap_Controller'))
 				{
 					$bootstrap = new Bootstrap_Controller();
 
-					if (method_exists($bootstrap, 'onConstruct') && is_callable(array($bootstrap, 'onConstruct')))
+					if (method_exists($bootstrap, 'onConstruct') && is_callable([$bootstrap, 'onConstruct']))
 						$bootstrap->onConstruct();
 				}
 
-				if (class_exists($routes['controller']))
+				if ($willThrow404 === false)
 				{
 					$c = new $routes['controller']();
 					$p = $routes['params'];
 					$j = method_exists($c, $routes['action']);
-					$i = is_callable(array($c, $routes['action']));
+					$i = is_callable([$c, $routes['action']]);
 					$n = method_exists($c, '__call');
-					$x = is_callable(array($c, '__call'));
+					$x = is_callable([$c, '__call']);
 
 					if (($j && $i) || ($n && $x))
 					{
@@ -416,7 +420,7 @@
 						else if (count($p) == 0)
 							$c->{$routes['action']}();
 						else
-							call_user_func_array(array($c, $routes['action']), $p);
+							call_user_func_array([$c, $routes['action']], $p);
 
 					} else {
 
@@ -428,7 +432,7 @@
 					self::_logExit('page', __LINE__);
 				}
 
-				if (!is_null($bootstrap) && is_callable(array($bootstrap, 'onDestruct')))
+				if (!is_null($bootstrap) && is_callable([$bootstrap, 'onDestruct']))
 					$bootstrap->onDestruct();
 
 				unset($c);
@@ -475,7 +479,7 @@
 						{
 							$_c = $catch[$key];
 
-							if ($key == '*' || $key == 'all' || $key == $errorCode)
+							if (in_array($key, ['*', 'all', $errorCode]))
 							{
 								if (is_array($_c))
 								{
@@ -612,13 +616,13 @@
 			self::stop();
 		}
 
-		private static function _checkApplicationIntegrity($path)
+		private static function _checkAppIntegrity($path)
 		{
 			$return = false;
 
 			if (!is_null($path))
 			{
-				foreach (array('controllers') as $k)
+				foreach (['controllers'] as $k)
 					$return = (!is_dir($path . DS . $k)) ? false : true;
 			}
 

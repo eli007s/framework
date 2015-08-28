@@ -2,15 +2,26 @@
 
 	class JXP_Application
 	{
-		private static $_active = null;
-		private static $_app    = array();
-		private static $_apps   = array();
-		private static $_using  = null;
-		private static $_dirs   = array('config' => 'config', 'applications' => 'applications', 'views' => 'views');
+		private static $_active   = null;
+		private static $_app      = [];
+		private static $_apps     = array();
+		private static $_using    = null;
+		private static $_throw404 = false;
+		private static $_dirs     = ['config' => 'config', 'applications' => 'applications', 'views' => 'views'];
 
 		public static function setActive($active = null)
 		{
 			self::$_active = $active;
+		}
+
+		public static function setWillThrow404($flag)
+		{
+			self::$_throw404 = $flag;
+		}
+
+		public static function willThrow404()
+		{
+			return self::$_throw404;
 		}
 
 		public static function using($app)
