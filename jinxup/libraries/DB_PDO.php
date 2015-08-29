@@ -141,69 +141,6 @@
 
 		private function _runQuery($query, $bind, $hash)
 		{
-			$debug = debug_backtrace();
-
-			/*$callerIdx['file']     = 0;
-			$callerIdx['line']     = 0;
-			$callerIdx['class']    = 0;
-			$callerIdx['function'] = 0;
-
-			if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 1;
-				$callerIdx['line']     = 2;
-				$callerIdx['class']    = 2;
-				$callerIdx['function'] = 2;
-			}
-
-			if (isset($debug[5]) && $debug[5]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 3;
-				$callerIdx['line']     = 4;
-				$callerIdx['class']    = 4;
-				$callerIdx['function'] = 4;
-			}
-
-			if (isset($debug[6]) && $debug[6]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 3;
-				$callerIdx['line']     = 3;
-				$callerIdx['class']    = 4;
-				$callerIdx['function'] = 4;
-			}
-
-			if (isset($debug[7]) && $debug[7]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 4;
-				$callerIdx['line']     = 4;
-				$callerIdx['class']    = 6;
-				$callerIdx['function'] = 5;
-			}
-
-			if (isset($debug[8]) && $debug[8]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 3;
-				$callerIdx['line']     = 3;
-				$callerIdx['class']    = 4;
-				$callerIdx['function'] = 4;
-			}
-
-			if (isset($debug[9]) && $debug[9]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 5;
-				$callerIdx['line']     = 5;
-				$callerIdx['class']    = 6;
-				$callerIdx['function'] = 6;
-			}
-
-			if (isset($debug[11]) && $debug[11]['function'] == '_loadApplication')
-			{
-				$callerIdx['file']     = 8;
-				$callerIdx['line']     = 8;
-				$callerIdx['class']    = 6;
-				$callerIdx['function'] = 6;
-			}*/
-
 			$results  = null;
 			$starTime = microtime(true);
 			$endTime  = 0;
@@ -212,18 +149,9 @@
 			$this->_log[$hash]['hash']   = $this->_hash;
 			$this->_log[$hash]['error']  = null;
 			$this->_log[$hash]['time']   = 0;
-
-			/*if (!$this->_mute)
-			{
-				$this->_log[$hash]['caller'] = array(
-					'file'     => $debug[$callerIdx['file']]['file'],
-					'line'     => $debug[$callerIdx['line']]['line'],
-					'class'    => $debug[$callerIdx['class']]['class'],
-					'function' => $debug[$callerIdx['function']]['function']
-				);
-			}*/
-
 			$this->_log[$hash]['query']  = array('raw' => $query, 'preview' => $this->previewQuery($query, $bind));
+
+			$this->_con->beginTransaction();
 
 			try
 			{
@@ -241,7 +169,7 @@
 
 						$this->_prepareParameters($stmt, $bind, $params, $hash);
 					}
-					
+
 					$execute = $stmt->execute();
 
 					if ($execute !== false)
@@ -256,6 +184,8 @@
 							$results = $this->_con->lastInsertId();
 					
 						$endTime = microtime(true);
+
+						$this->_con->commit();
 
 					} else {
 
@@ -272,16 +202,169 @@
 				$endTime = microtime(true);
 				$debug   = debug_backtrace();
 
-				//if(!$this->_mute)
-				//{
-					$this->_log[$hash]['error'] = array(
-						'file'    => $debug[2]['file'],
-						'line'    => $debug[2]['line'],
-						'message' => $e->getMessage()
-					);
-				//}
+				/*$callerIdx['file']     = 0;
+				$callerIdx['line']     = 0;
+				$callerIdx['class']    = 0;
+				$callerIdx['function'] = 0;
 
-				$this->_log[$hash]['error']['message'] = $e->getMessage();
+				if (isset($debug[3]) && $debug[3]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 1;
+					$callerIdx['line']     = 2;
+					$callerIdx['class']    = 2;
+					$callerIdx['function'] = 2;
+				}
+
+				if (isset($debug[5]) && $debug[5]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 3;
+					$callerIdx['line']     = 4;
+					$callerIdx['class']    = 4;
+					$callerIdx['function'] = 4;
+				}
+
+				if (isset($debug[6]) && $debug[6]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 3;
+					$callerIdx['line']     = 3;
+					$callerIdx['class']    = 4;
+					$callerIdx['function'] = 4;
+				}
+
+				if (isset($debug[7]) && $debug[7]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 4;
+					$callerIdx['line']     = 4;
+					$callerIdx['class']    = 6;
+					$callerIdx['function'] = 5;
+				}
+
+				if (isset($debug[8]) && $debug[8]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 3;
+					$callerIdx['line']     = 3;
+					$callerIdx['class']    = 4;
+					$callerIdx['function'] = 4;
+				}
+
+				if (isset($debug[9]) && $debug[9]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 5;
+					$callerIdx['line']     = 5;
+					$callerIdx['class']    = 6;
+					$callerIdx['function'] = 6;
+				}
+
+				if (isset($debug[11]) && $debug[11]['function'] == '_loadApplication')
+				{
+					$callerIdx['file']     = 8;
+					$callerIdx['line']     = 8;
+					$callerIdx['class']    = 6;
+					$callerIdx['function'] = 6;
+				}
+
+				$this->_log[$hash]['caller'] = array(
+					'file'     => $debug[$callerIdx['file']]['file'],
+					'line'     => $debug[$callerIdx['line']]['line'],
+					'class'    => $debug[$callerIdx['class']]['class'],
+					'function' => $debug[$callerIdx['function']]['function']
+				);*/
+
+
+				$this->_log[$hash]['error'] = array(
+					'file'    => $debug[2]['file'],
+					'line'    => $debug[2]['line'],
+					'message' => $e->getMessage()
+				);
+
+				$config = JXP_Config::get('error');
+
+				if (isset($config['database']))
+				{
+					$dbError = $config['database'];
+
+					if (isset($dbError['using']))
+					{
+						$using = $dbError['using'];
+
+						switch (strtolower($using))
+						{
+							case 'email':
+
+								if (isset($dbError['database'][$using]['transport']))
+								{
+									$transport = $dbError['database'][$using]['transport'];
+
+									if (isset($transport['type']))
+									{
+										$type = $transport['type'];
+
+										if (strtolower($type) == 'ses')
+										{
+											if (isset($transport['credentials']))
+											{
+												if (isset($dbError['database'][$using]['email']))
+												{
+													$email = $dbError['database'][$using]['email'];
+
+													if ((isset($email['to']) && !empty($email['to'])) && isset($email['from']) && !empty($email['from']))
+													{
+														$ses = JXP_Vendor::load('aws')->using($transport['credentials'])->get('Ses');
+
+														$subject = null;
+
+														if (isset($email['subject']) && !empty($email['subject']))
+															$subject = $email['subject'];
+
+														$replyTo    = $email['from'];
+														$returnPath = $email['from'];
+
+														if ((isset($email['replyTo']) && !empty($email['replyTo'])))
+															$returnPath = $email['replyTo'];
+
+														if ((isset($email['returnPath']) && !empty($email['returnPath'])))
+															$returnPath = $email['returnPath'];
+
+														try
+														{
+															$ses->sendEmail([
+																'Source'      => $email['from'],
+																'Destination' => [
+																	'ToAddresses' => [$email['to']]
+																],
+																'Message' => [
+																	'Subject' => [
+																		'Data'    => $subject,
+																		'Charset' => 'UTF-8',
+																	],
+																	'Body' => [
+																		'Html' => [
+																			'Data'    => 'test',
+																			'Charset' => 'UTF-8',
+																		],
+																	],
+																],
+																'ReplyToAddresses' => [$replyTo],
+																'ReturnPath'       => $returnPath
+															]);
+
+														} catch (Aws\Ses\Exception\SesException $e) {
+
+															echo $e->getMessage();
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+
+								break;
+						}
+					}
+				}
+
+				$this->_con->rollBack();
 			}
 
 			$this->_log[$hash]['time'] = $endTime - $starTime;
