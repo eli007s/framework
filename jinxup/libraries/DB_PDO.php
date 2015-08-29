@@ -325,6 +325,14 @@
 
 													try
 													{
+														ob_start();
+
+														echo '<pre>' . print_r($this->_log[$hash]['error'], true) . '</pre>';
+
+														$body = ob_get_contents();
+
+														ob_end_clean();
+
 														$ses->sendEmail([
 															'Source'      => $email['from'],
 															'Destination' => [
@@ -337,7 +345,7 @@
 																],
 																'Body' => [
 																	'Html' => [
-																		'Data'    => 'test',
+																		'Data'    => $body,
 																		'Charset' => 'UTF-8',
 																	],
 																],
@@ -345,8 +353,6 @@
 															'ReplyToAddresses' => [$replyTo],
 															'ReturnPath'       => $returnPath
 														]);
-
-														echo 'email sent';
 
 													} catch (Aws\Ses\Exception\SesException $e) {
 
