@@ -291,9 +291,9 @@
 						{
 							case 'email':
 
-								if (isset($dbError['database'][$using]['transport']))
+								if (isset($dbError[$using]['transport']))
 								{
-									$transport = $dbError['database'][$using]['transport'];
+									$transport = $dbError[$using]['transport'];
 
 									if (isset($transport['type']))
 									{
@@ -303,55 +303,54 @@
 										{
 											if (isset($transport['credentials']))
 											{
-												if (isset($dbError['database'][$using]['email']))
+												$email = $dbError[$using];
+
+												if ((isset($email['to']) && !empty($email['to'])) && isset($email['from']) && !empty($email['from']))
 												{
-													$email = $dbError['database'][$using]['email'];
+													$ses = JXP_Vendor::load('aws')->using($transport['credentials'])->get('Ses');
 
-													if ((isset($email['to']) && !empty($email['to'])) && isset($email['from']) && !empty($email['from']))
+													$subject = null;
+
+													if (isset($email['subject']) && !empty($email['subject']))
+														$subject = $email['subject'];
+
+													$replyTo    = $email['from'];
+													$returnPath = $email['from'];
+
+													if ((isset($email['replyTo']) && !empty($email['replyTo'])))
+														$returnPath = $email['replyTo'];
+
+													if ((isset($email['returnPath']) && !empty($email['returnPath'])))
+														$returnPath = $email['returnPath'];
+
+													try
 													{
-														$ses = JXP_Vendor::load('aws')->using($transport['credentials'])->get('Ses');
-
-														$subject = null;
-
-														if (isset($email['subject']) && !empty($email['subject']))
-															$subject = $email['subject'];
-
-														$replyTo    = $email['from'];
-														$returnPath = $email['from'];
-
-														if ((isset($email['replyTo']) && !empty($email['replyTo'])))
-															$returnPath = $email['replyTo'];
-
-														if ((isset($email['returnPath']) && !empty($email['returnPath'])))
-															$returnPath = $email['returnPath'];
-
-														try
-														{
-															$ses->sendEmail([
-																'Source'      => $email['from'],
-																'Destination' => [
-																	'ToAddresses' => [$email['to']]
+														$ses->sendEmail([
+															'Source'      => $email['from'],
+															'Destination' => [
+																'ToAddresses' => [$email['to']]
+															],
+															'Message' => [
+																'Subject' => [
+																	'Data'    => $subject,
+																	'Charset' => 'UTF-8',
 																],
-																'Message' => [
-																	'Subject' => [
-																		'Data'    => $subject,
+																'Body' => [
+																	'Html' => [
+																		'Data'    => 'test',
 																		'Charset' => 'UTF-8',
 																	],
-																	'Body' => [
-																		'Html' => [
-																			'Data'    => 'test',
-																			'Charset' => 'UTF-8',
-																		],
-																	],
 																],
-																'ReplyToAddresses' => [$replyTo],
-																'ReturnPath'       => $returnPath
-															]);
+															],
+															'ReplyToAddresses' => [$replyTo],
+															'ReturnPath'       => $returnPath
+														]);
 
-														} catch (Aws\Ses\Exception\SesException $e) {
+														echo 'email sent';
 
-															echo $e->getMessage();
-														}
+													} catch (Aws\Ses\Exception\SesException $e) {
+
+														echo $e->getMessage();
 													}
 												}
 											}
