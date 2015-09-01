@@ -386,6 +386,10 @@
 							break;
 					}
 				}
+
+			} else {
+
+				echo $log;
 			}
 		}
 
