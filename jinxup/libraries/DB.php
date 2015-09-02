@@ -37,7 +37,7 @@
 		 * @param int $port
 		 * @return object
 		 */
-		public static function fuel($alias, $host = null, $name = null, $user = null, $pass = null, $port = 3306)
+		public static function fuel($alias, $host = 'localhost', $name = null, $user = 'root', $pass = null, $port = 3306)
 		{
 			$fuel = array('host' => $host, 'name' => $name, 'user' => $user, 'pass' => $pass, 'port' => $port);
 

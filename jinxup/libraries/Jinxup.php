@@ -392,12 +392,12 @@
 
 				JXP_Application::setWillThrow404($willThrow404);
 
-				if (class_exists('Bootstrap_Controller'))
+				if (class_exists('__init__'))
 				{
-					$bootstrap = new Bootstrap_Controller();
+					$init = new __init__();
 
-					if (method_exists($bootstrap, 'onConstruct') && is_callable([$bootstrap, 'onConstruct']))
-						$bootstrap->onConstruct();
+					if (method_exists($init, 'launch') && is_callable([$init, 'launch']))
+						$init->launch();
 				}
 
 				if ($willThrow404 === false)
