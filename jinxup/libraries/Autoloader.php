@@ -52,14 +52,22 @@
 
 					if (isset($pathKeys[1]) && isset(self::$_paths[$pathKeys[1]]))
 					{
-						$_class = explode('_', $class);
-
-						if (count($_class) > 2)
+						if ($class == '__init__')
 						{
-							$_type = array_pop($_class);
+							$_class[0] = $class;
+							$_class[1] = 'controller';
 
-							$_class[0] = implode('_', $_class);
-							$_class[1] = $_type;
+						} else {
+
+							$_class = explode('_', $class);
+
+							if (count($_class) > 2)
+							{
+								$_type = array_pop($_class);
+
+								$_class[0] = implode('_', $_class);
+								$_class[1] = $_type;
+							}
 						}
 					}
 
