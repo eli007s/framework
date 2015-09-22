@@ -401,8 +401,7 @@
 
 				if ($willThrow404 === false)
 				{
-					$_ = self::$_randomPrefix . $routes['controller'];
-					$c = new $_();
+					$c = new $routes['controller']();
 					$p = $routes['params'];
 					$j = method_exists($c, $routes['action']);
 					$i = is_callable([$c, $routes['action']]);
