@@ -9,8 +9,7 @@
 		private static $_apps       = array();
 		private static $_loadedApps = array();
 		private static $_thisPath   = null;
-		private static $_rootDir    = null;
-		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
+		private static $_routes     = ['controller' => 'Index_Controller', 'action' => 'indexAction'];
 
 		public function __construct()
 		{
@@ -48,6 +47,9 @@
 				{
 					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
 
+					//spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
+					//spl_autoload_register(array('JXP_Autoloader', 'autoload'));
+
 					self::_prepareURI();
 					self::_setApplication($app);
 					self::_autoload();
@@ -58,12 +60,13 @@
 					self::_logExit('application');
 				}
 
-				self::stop();
+				self::_stop();
 			}
 		}
 
-		public static function stop()
+		private static function _stop()
 		{
+			// TODO: stop logic
 			exit;
 		}
 
@@ -79,11 +82,6 @@
 			return is_dir($path[$dir]) ? $path[$dir] : null;
 		}
 
-		public function getInit()
-		{
-			echo self::$_init;
-		}
-
 		public static function getApp()
 		{
 			return self::$_app;
@@ -93,10 +91,11 @@
 		{
 			$autoloaderPath = __DIR__ . DS . 'Autoloader.php';
 
-			spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
-
 			if (!file_exists($autoloaderPath))
+			{
+				// TODO: load error template
 				exit('Missing autoloader');
+			}
 
 			require_once($autoloaderPath);
 
@@ -392,17 +391,18 @@
 
 				JXP_Application::setWillThrow404($willThrow404);
 
-				if (class_exists('__init__'))
+				if (class_exists('bootstrap'))
 				{
-					$init = new __init__();
+					$bootstrap = new bootstrap();
 
-					if (method_exists($init, 'launch') && is_callable([$init, 'launch']))
-						$init->launch();
+					if (method_exists($bootstrap, 'beforeLaunch') && is_callable([$bootstrap, 'beforeLaunch']))
+						$bootstrap->beforeLaunch();
 				}
 
 				if ($willThrow404 === false)
 				{
-					$c = new $routes['controller']();
+					$_ = self::$_randomPrefix . $routes['controller'];
+					$c = new $_();
 					$p = $routes['params'];
 					$j = method_exists($c, $routes['action']);
 					$i = is_callable([$c, $routes['action']]);
@@ -432,8 +432,8 @@
 					self::_logExit('page', __LINE__);
 				}
 
-				if (!is_null($bootstrap) && is_callable([$bootstrap, 'onDestruct']))
-					$bootstrap->onDestruct();
+				if (!is_null($bootstrap) && method_exists($bootstrap, 'afterLaunch') &&  is_callable([$bootstrap, 'afterLaunch']))
+					$bootstrap->afterLaunch();
 
 				unset($c);
 				unset($p);

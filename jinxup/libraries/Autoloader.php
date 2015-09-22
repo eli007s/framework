@@ -52,7 +52,7 @@
 
 					if (isset($pathKeys[1]) && isset(self::$_paths[$pathKeys[1]]))
 					{
-						if ($class == '__init__')
+						if ($class == 'bootstrap')
 						{
 							$_class[0] = $class;
 							$_class[1] = 'controller';
@@ -79,14 +79,21 @@
 			}
 
 			if (!is_null($file) && file_exists($file))
-				require_once($file);
+			{
+				include($file);
+				//echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
+//echo $file; echo '<br />';
+			} else {
+
+				// TODO: load error template for missing file
+				// error out silently or halt app execution
+			}
 		}
 
 		private static function search($class, $_class, $path)
 		{
-			$foundClassFilename   = null;
-			$potentialFileNames[] = $_class[0];
-			$potentialFileNames[] = $class;
+			$foundClassFilename = null;
+			$potentialFileNames = [$_class[0], $class];
 
 			if (isset($_class[1]))
 				$potentialFileNames[] = $_class[1][0] . $_class[0];
