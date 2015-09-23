@@ -21,6 +21,12 @@
 		public $alias = 1;
 
 		/**
+		 * @var null
+		 * @access private
+		 */
+		private static $_init = null;
+
+		/**
 		 * Return the alias used for this instance
 		 */
 		public function __construct()
@@ -44,11 +50,21 @@
 			return self::ignite($alias, $fuel);
 		}
 
+		/**
+		 * @param string $storage
+		 * @param string $alias
+		 * @return object
+		 */
 		public static function sqlite($storage = null, $alias = null)
 		{
 			$fuel = array('storage' => $storage, 'driver' => 'sqlite');
 
 			return self::ignite($alias, $fuel);
+		}
+
+		public function init()
+		{
+			return $this;
 		}
 
 		public static function using($alias)
@@ -205,6 +221,9 @@
 		 */
 		public function __call($alias, $params)
 		{
+			//var_dump($alias);
+			//echo '<pre>', print_r($alias, true), '</pre>';
+			//echo '<pre>', print_r($params, true), '</pre>';
 			$dbObj  = self::$_database[self::$_alias];
 			$return = null;
 

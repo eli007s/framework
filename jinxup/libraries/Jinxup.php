@@ -4,12 +4,13 @@
 	{
 		private static $_app;
 		private static $_config;
-		private static $_exit       = false;
-		private static $_init       = null;
-		private static $_apps       = array();
+		private static $_exit = false;
+		private static $_init = null;
+		private static $_apps = array();
 		private static $_loadedApps = array();
-		private static $_thisPath   = null;
-		private static $_routes     = ['controller' => 'Index_Controller', 'action' => 'indexAction'];
+		private static $_thisPath = null;
+		private static $_version = '1.0b';
+		private static $_routes = ['controller' => 'Index_Controller', 'action' => 'indexAction'];
 
 		public function __construct()
 		{
@@ -21,6 +22,19 @@
 			self::_autoload();
 
 			JXP_Error::register(E_ALL);
+		}
+
+		public function __toString()
+		{
+			return self::$_version;
+		}
+
+		public function __get($name)
+		{
+			$class = 'JXP_' . $name;
+			$calling = new $class();
+
+			return $calling->init();
 		}
 
 		public function init()
@@ -47,9 +61,6 @@
 				{
 					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
 
-					//spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
-					//spl_autoload_register(array('JXP_Autoloader', 'autoload'));
-
 					self::_prepareURI();
 					self::_setApplication($app);
 					self::_autoload();
@@ -57,7 +68,7 @@
 
 				} else {
 
-					self::_logExit('application');
+					self::_exitWith('application');
 				}
 
 				self::_stop();
@@ -193,7 +204,7 @@
 
 				} else {
 
-					self::_logExit('file', __LINE__);
+					self::_exitWith('file', __LINE__);
 				}
 
 			} else {
@@ -287,7 +298,7 @@
 
 			if (empty(self::$_apps))
 			{
-				self::_logExit('welcome', __LINE__);
+				self::_exitWith('welcome', __LINE__);
 
 			} else {
 
@@ -311,7 +322,7 @@
 							if (array_key_exists($config['active'], self::$_apps))
 								$activeApp = $config['active'];
 							else
-								self::_logExit('application', __LINE__);
+								self::_exitWith('application', __LINE__);
 
 							unset(self::$_config['active']);
 						}
@@ -327,7 +338,7 @@
 						}
 
 						if (is_null($activeApp))
-							self::_logExit('active', __LINE__);
+							self::_exitWith('active', __LINE__);
 					}
 				}
 
@@ -368,12 +379,12 @@
 
 						} else {
 
-							self::_logExit('integrity', __LINE__);
+							self::_exitWith('integrity', __LINE__);
 						}
 
 					} else {
 
-						self::_logExit('page', __LINE__);
+						self::_exitWith('page', __LINE__);
 					}
 				}
 			}
@@ -423,12 +434,12 @@
 
 					} else {
 
-						self::_logExit('page', __LINE__);
+						self::_exitWith('page', __LINE__);
 					}
 
 				} else {
 
-					self::_logExit('page', __LINE__);
+					self::_exitWith('page', __LINE__);
 				}
 
 				if (!is_null($bootstrap) && method_exists($bootstrap, 'afterLaunch') &&  is_callable([$bootstrap, 'afterLaunch']))
@@ -446,7 +457,7 @@
 			return self::$_config;
 		}
 
-		protected static function _logExit($errorType = null, $line = 0)
+		protected static function _exitWith($errorType = null, $line = 0)
 		{
 			self::$_exit = true;
 

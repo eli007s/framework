@@ -80,9 +80,8 @@
 
 			if (!is_null($file) && file_exists($file))
 			{
-				include($file);
-				//echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
-//echo $file; echo '<br />';
+				require_once($file);
+
 			} else {
 
 				// TODO: load error template for missing file

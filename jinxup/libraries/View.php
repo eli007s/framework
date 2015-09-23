@@ -188,7 +188,7 @@
 					if (preg_match('/Syntax error in template/im', $error, $match))
 					{
 						self::set('error', $e->getMessage());
-						self::_logExit('template_syntax', __LINE__);
+						self::_exitWith('template_syntax', __LINE__);
 
 					} else {
 
