@@ -96,34 +96,37 @@
 			if (isset($config[$alias]))
 				extract($config[$alias]);
 
-			switch (strtolower($driver))
+			if (!is_null($_driver))
 			{
-				case 'mssql':
+				switch (strtolower($driver))
+				{
+					case 'mssql':
 
-					$_driver = "mssql:server=" . $host . ";database=" . $name;
+						$_driver = "mssql:server=" . $host . ";database=" . $name;
 
-					break;
+						break;
 
-				case 'sqlite':
+					case 'sqlite':
 
-					if (extension_loaded('sqlite3') || extension_loaded('pdo_sqlite'))
-					{
-						$file    .= !empty($store) || !is_null($store) ? getcwd() . DS . trim($store, '/') : ':memory:';
-						$_driver  = "sqlite:{$file}";
+						if (extension_loaded('sqlite3') || extension_loaded('pdo_sqlite'))
+						{
+							$file    .= !empty($store) || !is_null($store) ? getcwd() . DS . trim($store, '/') : ':memory:';
+							$_driver  = "sqlite:{$file}";
 
-					} else {
+						} else {
 
-						echo 'SQLite is not loaded';
-					}
+							echo 'SQLite is not loaded';
+						}
 
-					break;
+						break;
 
-				case 'pdo':
-				default:
+					case 'pdo':
+					default:
 
-					$_driver = "mysql:host=" . $host . ";port=" . $port . ";dbname=" . $name;
+						$_driver = "mysql:host=" . $host . ";port=" . $port . ";dbname=" . $name;
 
-					break;
+						break;
+				}
 			}
 
 			// TODO: possible error being thrown if $alias index does not exist
@@ -168,7 +171,7 @@
 				if (!isset(self::$_database[$alias]))
 					self::ignite($alias);
 
-				$dbObj  = self::$_database[$alias];
+				$dbObj = self::$_database[$alias];
 
 				if (method_exists($dbObj, $alias))
 				{
@@ -185,39 +188,42 @@
 
 				} else {
 
-					if (method_exists($dbObj->getConnection(), $alias))
+					if (!empty($dbObj))
 					{
-						$dbObj = $dbObj->getConnection();
-
-						if (count($params) == 4)
-							$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
-						else if (count($params) == 3)
-							$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
-						else if (count($params) == 2)
-							$return = $dbObj->{$alias}($params[0], $params[1]);
-						else if (count($params) == 1)
-							$return = $dbObj->{$alias}($params[0]);
-						else
-							$return = $dbObj->{$alias}();
-
-					} else {
-
-						if (!empty($params))
+						if (method_exists($dbObj->getConnection(), $alias))
 						{
+							$dbObj = $dbObj->getConnection();
+
 							if (count($params) == 4)
-								$return = $dbObj->query($params[0], $params[1], $params[2], $params[3]);
+								$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
 							else if (count($params) == 3)
-								$return = $dbObj->query($params[0], $params[1], $params[2]);
+								$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
 							else if (count($params) == 2)
-								$return = $dbObj->query($params[0], $params[1]);
+								$return = $dbObj->{$alias}($params[0], $params[1]);
 							else if (count($params) == 1)
-								$return = $dbObj->query($params[0]);
+								$return = $dbObj->{$alias}($params[0]);
 							else
-								$return = $dbObj->query();
+								$return = $dbObj->{$alias}();
 
 						} else {
 
-							$return = new self();
+							if (!empty($params))
+							{
+								if (count($params) == 4)
+									$return = $dbObj->query($params[0], $params[1], $params[2], $params[3]);
+								else if (count($params) == 3)
+									$return = $dbObj->query($params[0], $params[1], $params[2]);
+								else if (count($params) == 2)
+									$return = $dbObj->query($params[0], $params[1]);
+								else if (count($params) == 1)
+									$return = $dbObj->query($params[0]);
+								else
+									$return = $dbObj->query();
+
+							} else {
+
+								$return = new self();
+							}
 						}
 					}
 				}
@@ -242,6 +248,15 @@
 
 			} else {
 
+				// TODO: get the default query for the application or controller/action
+				if ($alias == 'query')
+				{
+					self::$_alias = 'default';
+
+					if (!isset(self::$_database['default']))
+						self::ignite('default');
+				}
+
 				$dbObj = self::$_database[self::$_alias];
 
 				if (method_exists($dbObj, $alias))
@@ -259,24 +274,27 @@
 
 				} else {
 
-					if (method_exists($dbObj->getConnection(), $alias))
+					if (!empty($dbObj))
 					{
-						$dbObj = $dbObj->getConnection();
+						if (method_exists($dbObj->getConnection(), $alias))
+						{
+							$dbObj = $dbObj->getConnection();
 
-						if (count($params) == 4)
-							$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
-						else if (count($params) == 3)
-							$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
-						else if (count($params) == 2)
-							$return = $dbObj->{$alias}($params[0], $params[1]);
-						else if (count($params) == 1)
-							$return = $dbObj->{$alias}($params[0]);
-						else
-							$return = $dbObj->{$alias}();
+							if (count($params) == 4)
+								$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
+							else if (count($params) == 3)
+								$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
+							else if (count($params) == 2)
+								$return = $dbObj->{$alias}($params[0], $params[1]);
+							else if (count($params) == 1)
+								$return = $dbObj->{$alias}($params[0]);
+							else
+								$return = $dbObj->{$alias}();
 
-					} else {
+						} else {
 
-						$return = $dbObj;
+							$return = $dbObj;
+						}
 					}
 				}
 			}
