@@ -6,7 +6,7 @@
 		 * @var array
 		 * @access private
 		 */
-		private static $_database = array();
+		private static $_database = [];
 
 		/**
 		 * @var null
@@ -24,7 +24,7 @@
 		 * @var null
 		 * @access private
 		 */
-		private static $_init = null;
+		private $_init = null;
 
 		/**
 		 * Return the alias used for this instance
@@ -32,6 +32,14 @@
 		public function __construct()
 		{
 			$this->alias = self::$_alias;
+		}
+
+		/**
+		 * @return object
+		 */
+		public function init()
+		{
+			return $this;
 		}
 
 		/**
@@ -45,7 +53,7 @@
 		 */
 		public static function fuel($alias, $host = 'localhost', $name = null, $user = 'root', $pass = null, $port = 3306)
 		{
-			$fuel = array('host' => $host, 'name' => $name, 'user' => $user, 'pass' => $pass, 'port' => $port);
+			$fuel = ['host' => $host, 'name' => $name, 'user' => $user, 'pass' => $pass, 'port' => $port];
 
 			return self::ignite($alias, $fuel);
 		}
@@ -62,12 +70,7 @@
 			return self::ignite($alias, $fuel);
 		}
 
-		public function init()
-		{
-			return $this;
-		}
-
-		public static function using($alias)
+		private static function _using($alias)
 		{
 			return self::ignite($alias);
 		}
@@ -76,7 +79,7 @@
 		 * @param string $alias
 		 * @param array $fuel
 		 */
-		public static function ignite($alias = null, $fuel = array())
+		public static function ignite($alias = null, $fuel = [])
 		{
 			$config  = !empty($fuel) ? array($alias => $fuel) : JXP_Config::get('database');
 			$host    = '';
@@ -124,7 +127,7 @@
 			}
 
 			// TODO: possible error being thrown if $alias index does not exist
-			self::$_database[$alias] = !is_null($_driver) ? new JXP_DB_PDO($alias, $_driver, $user, $pass) : array();
+			self::$_database[$alias] = !is_null($_driver) ? new JXP_DB_PDO($alias, $_driver, $user, $pass) : [];
 
 			return self::$_database[$alias];
 		}
@@ -151,33 +154,24 @@
 		 */
 		public static function __callStatic($alias, $params)
 		{
-			self::$_alias = $alias;
-
-			if (!isset(self::$_database[$alias]))
-				self::ignite($alias);
-
 			$return = null;
-			$dbObj  = self::$_database[$alias];
 
-			if (method_exists($dbObj, $alias))
+			if ($alias == 'using')
 			{
-				if (count($params) == 4)
-					$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
-				else if (count($params) == 3)
-					$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
-				else if (count($params) == 2)
-					$return = $dbObj->{$alias}($params[0], $params[1]);
-				else if (count($params) == 1)
-					$return = $dbObj->{$alias}($params[0]);
-				else
-					$return = $dbObj->{$alias}();
+				if (isset($params[0]))
+					$return = self::_using($params[0]);
 
 			} else {
 
-				if (method_exists($dbObj->getConnection(), $alias))
-				{
-					$dbObj = $dbObj->getConnection();
+				self::$_alias = $alias;
 
+				if (!isset(self::$_database[$alias]))
+					self::ignite($alias);
+
+				$dbObj  = self::$_database[$alias];
+
+				if (method_exists($dbObj, $alias))
+				{
 					if (count($params) == 4)
 						$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
 					else if (count($params) == 3)
@@ -191,22 +185,40 @@
 
 				} else {
 
-					if (!empty($params))
+					if (method_exists($dbObj->getConnection(), $alias))
 					{
+						$dbObj = $dbObj->getConnection();
+
 						if (count($params) == 4)
-							$return = $dbObj->query($params[0], $params[1], $params[2], $params[3]);
+							$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
 						else if (count($params) == 3)
-							$return = $dbObj->query($params[0], $params[1], $params[2]);
+							$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
 						else if (count($params) == 2)
-							$return = $dbObj->query($params[0], $params[1]);
+							$return = $dbObj->{$alias}($params[0], $params[1]);
 						else if (count($params) == 1)
-							$return = $dbObj->query($params[0]);
+							$return = $dbObj->{$alias}($params[0]);
 						else
-							$return = $dbObj->query();
+							$return = $dbObj->{$alias}();
 
 					} else {
 
-						$return = new self();
+						if (!empty($params))
+						{
+							if (count($params) == 4)
+								$return = $dbObj->query($params[0], $params[1], $params[2], $params[3]);
+							else if (count($params) == 3)
+								$return = $dbObj->query($params[0], $params[1], $params[2]);
+							else if (count($params) == 2)
+								$return = $dbObj->query($params[0], $params[1]);
+							else if (count($params) == 1)
+								$return = $dbObj->query($params[0]);
+							else
+								$return = $dbObj->query();
+
+						} else {
+
+							$return = new self();
+						}
 					}
 				}
 			}
@@ -221,31 +233,19 @@
 		 */
 		public function __call($alias, $params)
 		{
-			//var_dump($alias);
-			//echo '<pre>', print_r($alias, true), '</pre>';
-			//echo '<pre>', print_r($params, true), '</pre>';
-			$dbObj  = self::$_database[self::$_alias];
 			$return = null;
 
-			if (method_exists($dbObj, $alias))
+			if ($alias == 'using')
 			{
-				if (count($params) == 4)
-					$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
-				else if (count($params) == 3)
-					$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
-				else if (count($params) == 2)
-					$return = $dbObj->{$alias}($params[0], $params[1]);
-				else if (count($params) == 1)
-					$return = $dbObj->{$alias}($params[0]);
-				else
-					$return = $dbObj->{$alias}();
+				if (isset($params[0]))
+					$return = self::_using($params[0]);
 
 			} else {
 
-				if (method_exists($dbObj->getConnection(), $alias))
-				{
-					$dbObj = $dbObj->getConnection();
+				$dbObj = self::$_database[self::$_alias];
 
+				if (method_exists($dbObj, $alias))
+				{
 					if (count($params) == 4)
 						$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
 					else if (count($params) == 3)
@@ -259,7 +259,25 @@
 
 				} else {
 
-					$return = $dbObj;
+					if (method_exists($dbObj->getConnection(), $alias))
+					{
+						$dbObj = $dbObj->getConnection();
+
+						if (count($params) == 4)
+							$return = $dbObj->{$alias}($params[0], $params[1], $params[2], $params[3]);
+						else if (count($params) == 3)
+							$return = $dbObj->{$alias}($params[0], $params[1], $params[2]);
+						else if (count($params) == 2)
+							$return = $dbObj->{$alias}($params[0], $params[1]);
+						else if (count($params) == 1)
+							$return = $dbObj->{$alias}($params[0]);
+						else
+							$return = $dbObj->{$alias}();
+
+					} else {
+
+						$return = $dbObj;
+					}
 				}
 			}
 

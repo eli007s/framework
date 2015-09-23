@@ -389,7 +389,7 @@
 
 			} else {
 
-				echo $log;
+				echo '<pre>', print_r($log, true), '</pre>';
 			}
 		}
 

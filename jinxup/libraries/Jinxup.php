@@ -24,10 +24,10 @@
 			JXP_Error::register(E_ALL);
 		}
 
-		public function __toString()
+		/*public function __toString()
 		{
 			return self::$_version;
-		}
+		}*/
 
 		public function __get($name)
 		{
