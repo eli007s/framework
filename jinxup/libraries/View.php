@@ -44,6 +44,11 @@
 			return $return;
 		}
 
+		public function init()
+		{
+			return $this;
+		}
+
 		public static function setPath($key, $path)
 		{
 			self::$_paths[$key] = $path;

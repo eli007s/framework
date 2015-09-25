@@ -24,17 +24,18 @@
 			JXP_Error::register(E_ALL);
 		}
 
-		/*public function __toString()
+		public function __toString()
 		{
 			return self::$_version;
-		}*/
+		}
 
 		public function __get($name)
 		{
 			$class = 'JXP_' . $name;
 			$calling = new $class();
 
-			return $calling->init();
+			if (method_exists($calling, 'init'))
+				return $calling->init();
 		}
 
 		public function init()
