@@ -2,7 +2,7 @@
 
 	class JXP_View extends Jinxup
 	{
-		private static $_smarty    = null;
+		private static $_engine    = null;
 		private static $_config    = [];
 		private static $_params    = [];
 		private static $_regFilter = true;
@@ -22,19 +22,19 @@
 			try
 			{
 				if (count($params) == 0)
-					$return = self::$_smarty->{$name}();
+					$return = self::$_engine->{$name}();
 
 				if (count($params) == 1)
-					$return = self::$_smarty->{$name}($params[0]);
+					$return = self::$_engine->{$name}($params[0]);
 
 				if (count($params) == 2)
-					$return = self::$_smarty->{$name}($params[0], $params[1]);
+					$return = self::$_engine->{$name}($params[0], $params[1]);
 
 				if (count($params) == 3)
-					$return = self::$_smarty->{$name}($params[0], $params[1], $params[2]);
+					$return = self::$_engine->{$name}($params[0], $params[1], $params[2]);
 
 				if (count($params) == 4)
-					$return = self::$_smarty->{$name}($params[0], $params[1], $params[2], $params[3]);
+					$return = self::$_engine->{$name}($params[0], $params[1], $params[2], $params[3]);
 
 			} catch (Exception $e) {
 
@@ -93,7 +93,7 @@
 
 			self::$_vars = array_merge(self::$_vars, $vars);
 
-			if (is_null(self::$_smarty) && $smarty == true)
+			if (is_null(self::$_engine) && $smarty == true)
 			{
 				$smartyPath = dirname(__DIR__) . DS . 'engines' . DS . 'smarty' . DS . 'Smarty.class.php';
 
@@ -101,23 +101,23 @@
 				{
 					require_once($smartyPath);
 
-					self::$_smarty                  = new Smarty();
+					self::$_engine                  = new Smarty();
 					self::$_params['app']           = self::getApp();
-					self::$_smarty->left_delimiter  = '{!';
-					self::$_smarty->right_delimiter = '!}';
+					self::$_engine->left_delimiter  = '{!';
+					self::$_engine->right_delimiter = '!}';
 
 					if (isset(self::$_config['template']['delimiters']['left']))
-						self::$_smarty->left_delimiter = self::$_config['template']['delimiters']['left'];
+						self::$_engine->left_delimiter = self::$_config['template']['delimiters']['left'];
 
 					if (isset(self::$_config['template']['delimiters']['right']))
-						self::$_smarty->right_delimiter = self::$_config['template']['delimiters']['right'];
+						self::$_engine->right_delimiter = self::$_config['template']['delimiters']['right'];
 
-					self::$_smarty->assign('app', $_vars['app']);
-					self::$_smarty->assign('jxp', $_vars['jxp']);
-					self::$_smarty->setTemplateDir(self::$_paths['views']);
-					self::$_smarty->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
-					self::$_smarty->registerResource('file', new RecompileFileResource());
-					self::$_smarty->muteExpectedErrors();
+					self::$_engine->assign('app', $_vars['app']);
+					self::$_engine->assign('jxp', $_vars['jxp']);
+					self::$_engine->setTemplateDir(self::$_paths['views']);
+					self::$_engine->addPluginsDir(self::$_paths['views'] . DS . 'plugins');
+					self::$_engine->registerResource('file', new RecompileFileResource());
+					self::$_engine->muteExpectedErrors();
 				}
 			}
 
@@ -131,7 +131,7 @@
 
 			self::$_vars[$key] = $val;
 
-			self::$_smarty->assign($key, $val);
+			self::$_engine->assign($key, $val);
 		}
 
 		public static function render($tpl)
@@ -184,7 +184,7 @@
 
 				try
 				{
-					self::$_smarty->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
+					self::$_engine->display(self::$_paths['views'] . DS . ltrim($tpl, '/'));
 
 				} catch (SmartyException $e) {
 

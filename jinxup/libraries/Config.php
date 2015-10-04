@@ -16,7 +16,7 @@
 		{
 			$return = null;
 
-			foreach (JXP_Directory::scan($path, '.tell') as $config)
+			foreach (JXP_Directory::scan($path, '\.(tell|json|php)') as $config)
 			{
 				$contents   = file_get_contents($config);
 				$configTell = preg_replace(self::$_regEx, '', $contents);
