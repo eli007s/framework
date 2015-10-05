@@ -22,22 +22,17 @@
 
 		public static function getController($friendly = false)
 		{
-			return $friendly === true ? self::$_routes['controller'] : str_replace('_Controller', '', self::$_routes['controller']);
+			return $friendly === true ? self::$_routes['controller']['raw'] : self::$_routes['controller']['translated'];
 		}
 
 		public static function getActionCall($friendly = false)
 		{
-			return $friendly === true ? self::$_routes['action'] : str_replace('Action', '', self::$_routes['action']);
+			return $friendly === true ? self::$_routes['action']['raw'] : self::$_routes['action']['translated'];
 		}
 
 		public static function getModel($friendly = false)
 		{
-			return $friendly === true ? self::$_routes['controller'] . '_Model' : self::getController();
-		}
-
-		public static function setAction($action)
-		{
-			self::$_routes['action'] = $action;
+			return $friendly === true ? self::$_routes['controller']['translated'] . '_Model' : self::getController();
 		}
 
 		public static function getDomain()
@@ -45,16 +40,18 @@
 			return parse_url(getenv('HTTP_HOST'), PHP_URL_PATH);
 		}
 
-		public static function getSubdomain($depth = 0)
+		public static function getSubdomain($depth = 0, $tld = '.com')
 		{
-			$subdomain = explode('.', rawurldecode(getenv('HTTP_HOST')));
+			$subdomain = array_filter(explode('.', str_replace($tld, '', self::getDomain())));
 
-			return isset($subdomain[$depth]) ? $subdomain[$depth] : null;
+			unset($subdomain[(count($subdomain) - 1)]);
+
+			return count($subdomain) >= 1 ? isset($subdomain[$depth]) ? $subdomain[$depth] : null : null;
 		}
 
 		public static function getDomainExt()
 		{
-			$host = parse_url(getenv('HTTP_HOST'));
+			$host = self::getDomain();
 
 			preg_match('/(.*?)((\.co)?.[a-z]{2,4})$/im', $host['host'], $m);
 
@@ -73,6 +70,22 @@
 		public static function getParamCount()
 		{
 			return isset(self::$_routes['params']) ? count(self::$_routes['params']) : 0;
+		}
+
+		public static function getSegment($index = 0)
+		{
+			$return = null;
+
+			if ($index == 0)
+				$return = self::getController();
+
+			if ($index == 1)
+				$return = self::getActionCall();
+
+			if ($index > 1)
+				$return = isset(self::$_routes['params'][$index]) ? self::$_routes['params'][$index] : array();
+
+			return $return;
 		}
 
 		public static function getParams()

@@ -4,13 +4,14 @@
 	{
 		private static $_app;
 		private static $_config;
-		private static $_exit = false;
-		private static $_init = null;
-		private static $_apps = array();
+		private static $_exit       = false;
+		private static $_init       = null;
+		private static $_apps       = array();
 		private static $_loadedApps = array();
-		private static $_thisPath = null;
-		private static $_version = '1.0b';
-		private static $_routes = ['controller' => 'Index_Controller', 'action' => 'indexAction'];
+		private static $_thisPath   = null;
+		private static $_version    = '1.0b';
+		private static $_appFlag    = '';
+		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
 		{
@@ -61,6 +62,8 @@
 				if (array_key_exists($app, self::$_apps))
 				{
 					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
+
+					self::$_appFlag = 'loading';
 
 					self::_prepareURI();
 					self::_setApplication($app);
@@ -243,14 +246,22 @@
 					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
 					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
 
-					$controller = $prefix . str_replace('-', '_', array_shift($params)) . '_Controller';
+					$controller = array_shift($params);
 
-					self::$_routes['controller'] = $controller;
+					self::$_routes['controller']['raw'] = $controller;
+
+					$controller = $prefix . str_replace('-', '_', $controller) . '_Controller';
+
+					self::$_routes['controller']['translated'] = $controller;
 
 				} else {
 
 					array_shift($params);
 				}
+
+			} else {
+
+				self::$_routes['controller'] = array('raw' => 'index', 'translated' => 'Index_Controller');
 			}
 
 			if (!empty($params))
@@ -261,14 +272,22 @@
 					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
 					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
 
-					$action = $prefix . str_replace('-', '_', array_shift($params)) . 'Action';
+					$action = array_shift($params);
 
-					self::$_routes['action'] = $action;
+					self::$_routes['action']['raw'] = $action;
+
+					$action = $prefix . str_replace('-', '_', $action) . 'Action';
+
+					self::$_routes['action']['translated'] = $action;
 
 				} else {
 
 					array_shift($params);
 				}
+
+			} else {
+
+				self::$_routes['action'] = array('raw' => 'index', 'translated' => 'indexAction');
 			}
 
 			self::$_routes['params'] = $params;
@@ -399,11 +418,11 @@
 				$bootstrap = null;
 				$routes    = self::$_routes;
 
-				$willThrow404 = class_exists($routes['controller']) ? false : true;
+				$willThrow404 = class_exists($routes['controller']['translated']) ? false : true;
 
 				JXP_Application::setWillThrow404($willThrow404);
 
-				if (class_exists('bootstrap'))
+				if (class_exists('bootstrap') && self::$_appFlag != 'loading')
 				{
 					$bootstrap = new bootstrap();
 
@@ -413,25 +432,25 @@
 
 				if ($willThrow404 === false)
 				{
-					$c = new $routes['controller']();
+					$c = new $routes['controller']['translated']();
 					$p = $routes['params'];
-					$j = method_exists($c, $routes['action']);
-					$i = is_callable([$c, $routes['action']]);
+					$j = method_exists($c, $routes['action']['translated']);
+					$i = is_callable(array($c, $routes['action']['translated']));
 					$n = method_exists($c, '__call');
-					$x = is_callable([$c, '__call']);
+					$x = is_callable(array($c, '__call'));
 
 					if (($j && $i) || ($n && $x))
 					{
 						if (count($p) == 3)
-							$c->{$routes['action']}($p[0], $p[1], $p[2]);
+							$c->{$routes['action']['translated']}($p[0], $p[1], $p[2]);
 						else if (count($p) == 2)
-							$c->{$routes['action']}($p[0], $p[1]);
+							$c->{$routes['action']['translated']}($p[0], $p[1]);
 						else if (count($p) == 1)
-							$c->{$routes['action']}($p[0]);
+							$c->{$routes['action']['translated']}($p[0]);
 						else if (count($p) == 0)
-							$c->{$routes['action']}();
+							$c->{$routes['action']['translated']}();
 						else
-							call_user_func_array([$c, $routes['action']], $p);
+							call_user_func_array(array($c, $routes['action']['translated']), $p);
 
 					} else {
 
@@ -443,10 +462,18 @@
 					self::_exitWith('page', __LINE__);
 				}
 
-				if (!is_null($bootstrap) && method_exists($bootstrap, 'afterLaunch') &&  is_callable([$bootstrap, 'afterLaunch']))
+				$u = method_exists($bootstrap, 'afterLaunch');
+				$p = is_callable(array($bootstrap, 'afterLaunch'));
+
+				if (!is_null($bootstrap) && $u && $p && self::$_appFlag != 'loading')
 					$bootstrap->afterLaunch();
 
 				unset($c);
+				unset($j);
+				unset($i);
+				unset($n);
+				unset($x);
+				unset($u);
 				unset($p);
 				unset($routes);
 				unset($_bootstrap);
@@ -516,10 +543,10 @@
 													$locationRoutes = self::$_routes;
 													$breakError     = true;
 
-													$c1 = $currentRoutes['controller'];
-													$c2 = $locationRoutes['controller'];
-													$a1 = $currentRoutes['action'];
-													$a2 = $locationRoutes['action'];
+													$c1 = $currentRoutes['controller']['translated'];
+													$c2 = $locationRoutes['controller']['translated'];
+													$a1 = $currentRoutes['action']['translated'];
+													$a2 = $locationRoutes['action']['translated'];
 
 													if ($c1 != $c2 && $a1 != $a2)
 														header('Location: ' . $location);
