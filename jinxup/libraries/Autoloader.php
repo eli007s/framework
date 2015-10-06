@@ -2,9 +2,10 @@
 
 	class JXP_Autoloader
 	{
-		private static $_init = null;
-		private static $_path = array();
-		public static $loaded = array();
+		private static $_init  = null;
+		private static $_path  = null;
+		private static $_alias = null;
+		public static $loaded  = array();
 
 		private static function _init()
 		{
@@ -14,10 +15,12 @@
 			return self::$_init;
 		}
 
-		public static function peekIn($path)
+		public static function peekIn($path, $alias = null)
 		{
 			self::$_path = $path;
 
+			if (!is_null($alias))
+				self::$_alias = $alias;
 
 			return self::_init();
 		}
@@ -69,6 +72,9 @@
 			if (!is_null($file) && file_exists($file))
 			{
 				self::$loaded[] = $file;
+
+				if (!is_null(self::$_alias))
+					eval('namespace jinxup\\' . self::$_alias . ';');
 
 				require_once($file);
 

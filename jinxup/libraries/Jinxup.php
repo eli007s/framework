@@ -11,6 +11,7 @@
 		private static $_thisPath   = null;
 		private static $_version    = '1.0b';
 		private static $_appFlag    = '';
+		private static $_namespace  = null;
 		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
 
 		public function __construct()
@@ -61,11 +62,12 @@
 			{
 				if (array_key_exists($app, self::$_apps))
 				{
-					JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $app);
+					JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $app, $app);
 
 					spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
 
-					self::$_appFlag = 'loading';
+					self::$_appFlag   = 'loading';
+					self::$_namespace = $app;
 
 					self::_autoload();
 					self::_prepareURI();
@@ -419,14 +421,18 @@
 				$return    = null;
 				$bootstrap = null;
 				$routes    = self::$_routes;
-
+				$namespace    = null;
 				$willThrow404 = class_exists($routes['controller']['translated']) ? false : true;
 
 				JXP_Application::setWillThrow404($willThrow404);
 
-				if (class_exists('bootstrap'))
-				{echo '12';
-					$bootstrap = new bootstrap();
+				if (!is_null(self::$_namespace))
+					$namespace = '\\jinxup\\' . self::$_namespace . '\\';
+
+				if (class_exists($namespace . 'bootstrap'))
+				{
+					$bootstrap = $namespace . 'bootstrap';
+					$bootstrap = new $bootstrap();
 
 					if (method_exists($bootstrap, 'beforeLaunch') && is_callable([$bootstrap, 'beforeLaunch']))
 						$bootstrap->beforeLaunch();
@@ -434,7 +440,8 @@
 
 				if ($willThrow404 === false)
 				{
-					$c = new $routes['controller']['translated']();
+					$c = $namespace . $routes['controller']['translated'];
+					$c = new $c();
 					$p = $routes['params'];
 					$j = method_exists($c, $routes['action']['translated']);
 					$i = is_callable(array($c, $routes['action']['translated']));

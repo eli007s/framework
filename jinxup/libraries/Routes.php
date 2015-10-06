@@ -37,7 +37,7 @@
 
 		public static function getDomain()
 		{
-			return parse_url(getenv('HTTP_HOST'), PHP_URL_PATH);
+			return $_SERVER['HTTP_HOST'];
 		}
 
 		public static function getSubdomain($depth = 0, $tld = '.com')
@@ -70,7 +70,7 @@
 		public static function getURI()
 		{
 			$uri     = str_replace('index.php', '', getenv('PHP_SELF'));
-			$uri     = str_replace($uri, '', getenv('REQUEST_URI'));
+			$uri     = str_replace($uri, '', $_SERVER['REQUEST_URI']);
 			$request = rawurldecode(trim(parse_url($uri, PHP_URL_PATH), '/'));
 
 			return '/' . $request;
