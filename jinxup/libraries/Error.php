@@ -71,5 +71,7 @@
 				),
 				'var' => $vars
 			);
+
+			//echo '<pre>', print_r(self::$_error, true), '</pre>';
 		}
 	}

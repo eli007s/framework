@@ -2,8 +2,9 @@
 
 	class JXP_Autoloader
 	{
-		private static $_init  = null;
-		private static $_paths = array();
+		private static $_init = null;
+		private static $_path = array();
+		public static $loaded = array();
 
 		private static function _init()
 		{
@@ -13,20 +14,12 @@
 			return self::$_init;
 		}
 
-		public static function peekIn($paths, $alias = null)
+		public static function peekIn($path)
 		{
-			if (!is_null($alias))
-				self::$_paths[$alias] = $paths;
-			else
-				self::$_paths[] = $paths;
+			self::$_path = $path;
+
 
 			return self::_init();
-		}
-		
-		public static function removeFromPath($key)
-		{
-			if (array_key_exists($key, self::$_paths))
-				unset(self::$_paths[$key]);
 		}
 
 		public static function autoload($class)
@@ -36,7 +29,7 @@
 			if (strpos($class, 'JXP_') !== false)
 			{
 				$class = str_replace('JXP_', '', $class) . '.php';
-				$file  = self::$_paths[0] . DS . $class;
+				$file  = __DIR__ . DS . $class;
 
 			} else {
 
@@ -48,30 +41,25 @@
 
 				} else {
 
-					$pathKeys = array_keys(self::$_paths);
-
-					if (isset($pathKeys[1]) && isset(self::$_paths[$pathKeys[1]]))
+					if ($class == 'bootstrap')
 					{
-						if ($class == 'bootstrap')
+						$_class[0] = $class;
+						$_class[1] = 'controller';
+
+					} else {
+
+						$_class = explode('_', $class);
+
+						if (count($_class) > 2)
 						{
-							$_class[0] = $class;
-							$_class[1] = 'controller';
+							$_type = array_pop($_class);
 
-						} else {
-
-							$_class = explode('_', $class);
-
-							if (count($_class) > 2)
-							{
-								$_type = array_pop($_class);
-
-								$_class[0] = implode('_', $_class);
-								$_class[1] = $_type;
-							}
+							$_class[0] = implode('_', $_class);
+							$_class[1] = $_type;
 						}
 					}
 
-					$path = isset($_class[1]) ? self::$_paths[$pathKeys[1]] . DS . strtolower($_class[1]) . 's' : __DIR__;
+					$path = isset($_class[1]) ? self::$_path . DS . strtolower($_class[1]) . 's' : __DIR__;
 				}
 
 				if (isset($_class))
@@ -80,12 +68,15 @@
 
 			if (!is_null($file) && file_exists($file))
 			{
+				self::$loaded[] = $file;
+
 				require_once($file);
 
 			} else {
 
 				// TODO: load error template for missing file
 				// error out silently or halt app execution
+				//echo 'missing file to autoload: ' . $file;
 			}
 		}
 

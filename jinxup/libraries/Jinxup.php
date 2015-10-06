@@ -32,7 +32,7 @@
 
 		public function __get($name)
 		{
-			$class = 'JXP_' . $name;
+			$class   = 'JXP_' . $name;
 			$calling = new $class();
 
 			if (method_exists($calling, 'init'))
@@ -61,22 +61,24 @@
 			{
 				if (array_key_exists($app, self::$_apps))
 				{
-					JXP_Autoloader::removeFromPath(JXP_Application::getActive());
+					JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $app);
+
+					spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
 
 					self::$_appFlag = 'loading';
 
+					self::_autoload();
 					self::_prepareURI();
 					self::_setApplication($app);
-					self::_autoload();
 					self::_runRoutes();
 
 				} else {
 
 					self::_exitWith('application');
 				}
-
-				self::_stop();
 			}
+
+			self::_stop();
 		}
 
 		private static function _stop()
@@ -387,7 +389,7 @@
 							if (isset(self::$_app['paths']['config']))
 								self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
 
-							JXP_Autoloader::peekIn(getcwd(), JXP_Application::getActive());
+							JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $activeApp);
 
 							if (isset(self::$_config['environment']))
 							{
@@ -422,8 +424,8 @@
 
 				JXP_Application::setWillThrow404($willThrow404);
 
-				if (class_exists('bootstrap') && self::$_appFlag != 'loading')
-				{
+				if (class_exists('bootstrap'))
+				{echo '12';
 					$bootstrap = new bootstrap();
 
 					if (method_exists($bootstrap, 'beforeLaunch') && is_callable([$bootstrap, 'beforeLaunch']))
@@ -651,7 +653,7 @@
 				JXP_View::render($errorTpl);
 			}
 
-			self::stop();
+			self::_stop();
 		}
 
 		private static function _checkAppIntegrity($path)

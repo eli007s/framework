@@ -2,7 +2,7 @@
 
 	class JXP_Routes
 	{
-		public static $_routes = array('controller' => 'Index_Controller', 'action' => 'indexAction');
+		public static $_routes = array('controller' => array('raw' => 'index', 'translated' => 'Index_Controller'), 'action' => array('raw' => 'index', 'translated' => 'indexAction'));
 		public static $prefix  = null;
 
 		public static function setRoutes($routes = array())
@@ -47,6 +47,15 @@
 			unset($subdomain[(count($subdomain) - 1)]);
 
 			return count($subdomain) >= 1 ? isset($subdomain[$depth]) ? $subdomain[$depth] : null : null;
+		}
+
+		public static function getSubdomains($tld = '.com')
+		{
+			$subdomain = array_filter(explode('.', str_replace($tld, '', self::getDomain())));
+
+			unset($subdomain[(count($subdomain) - 1)]);
+
+			return count($subdomain) >= 1 ? $subdomain : null;
 		}
 
 		public static function getDomainExt()
