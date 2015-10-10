@@ -418,16 +418,16 @@
 		{
 			if (self::$_exit == false)
 			{
-				$return    = null;
-				$bootstrap = null;
-				$routes    = self::$_routes;
+				$return       = null;
+				$bootstrap    = null;
+				$routes       = self::$_routes;
 				$namespace    = null;
-				$willThrow404 = class_exists($routes['controller']['translated']) ? false : true;
+				$willThrow404 = true;
 
 				JXP_Application::setWillThrow404($willThrow404);
 
 				if (!is_null(self::$_namespace))
-					$namespace = '\\jinxup\\' . self::$_namespace . '\\';
+					$namespace = '\\' . self::$_namespace . '\\';
 
 				if (class_exists($namespace . 'bootstrap'))
 				{
@@ -436,6 +436,15 @@
 
 					if (method_exists($bootstrap, 'beforeLaunch') && is_callable([$bootstrap, 'beforeLaunch']))
 						$bootstrap->beforeLaunch();
+				}
+
+				if (class_exists($namespace . $routes['controller']['translated'])) {
+					$willThrow404 = false;
+
+				} else if (class_exists($routes['controller']['translated'])) {
+
+					$willThrow404 = false;
+					$namespace    = null;
 				}
 
 				if ($willThrow404 === false)
