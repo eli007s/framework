@@ -27,9 +27,23 @@
 			$config = JXP_Config::get('vendors');
 
 			if (is_array($credentials))
+			{
 				$config = $credentials;
-			else
-				$config = $config[self::$_vendor][$credentials];
+
+			} else {
+
+				if (strpos(':', $credentials) !== false)
+				{
+					$creds = explode(':', $credentials);
+
+					if (isset($config[self::$_vendor][0][1]))
+						$config = $config[self::$_vendor][$creds[0]][$creds[1]];
+
+				} else {
+
+					$config = $config[self::$_vendor][$credentials];
+				}
+			}
 
 			if (self::$_vendor == 'aws')
 			{
