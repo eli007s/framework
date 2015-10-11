@@ -29,18 +29,15 @@
 			"*" : "default" // location of error view or "default" for default error
 		}
 	},
-  	"template" : {
-	  "use" : "smarty",
-	  "smarty" : { // Smarty template engine configuration settings
+	"smarty" : { // Smarty template engine configuration settings
 
 		"delimiters" : {
 
-		  "left" : "{!",
-		  "right" : "!}"
+			"left" : "{!",
+			"right" : "!}"
 		},
 
 		"use" : "myDelimiters" // This will override the delimiter settings above
-	  }
 	},
 
 	"settings" : { // Setting templates to be used in other setting

@@ -24,9 +24,7 @@
 	{
 		require_once($controller);
 
-		$jxp = new Jinxup();
-
-		$jxp->init();
+		$jinxup = new Jinxup();
 
 	} else {
 

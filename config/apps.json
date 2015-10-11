@@ -1,0 +1,26 @@
+{
+	"apps" : {
+
+		"enable" : true,
+
+		"playground" : {
+
+			"use"        : "setting-name",
+			"database"   : { "use" : "database-name" },
+			"routes"     : {},
+			"views"      : {},
+			"error"      : {},
+			"controller" : {},
+			"actions"    : {},
+			"vendors"    : {},
+			"meta"       : {
+
+				"author" : {
+
+					"name"  : "Eliezer Orellana",
+					"email" : "eli007s@gmail.com"
+				}
+			}
+		}
+	}
+}

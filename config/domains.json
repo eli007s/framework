@@ -1,0 +1,15 @@
+{
+	"domains" : {
+
+		"enable" : true,
+
+		"*" : {
+
+			"use"      : "setting-name",
+			"database" : { "use" : "default-database" },
+			"routes"   : {},
+			"views"    : {},
+			"error"    : {}
+		}
+	}
+}
