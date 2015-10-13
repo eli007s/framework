@@ -21,15 +21,39 @@
 		}
 
 		/*
+		 * @param $app the app that should handle the routing
+		 */
+		public function app($app)
+		{
+			if (!in_array(__FUNCTION__, $this->_invoked))
+				$this->_invoked[] = __FUNCTION__;
+
+			$this->_routes[] = $app;
+
+			JXP_Autoloader::addApp(getcwd() . DS . 'applications' . DS . $app);
+
+			return $this;
+		}
+
+		/*
 		 * @param $route string
 		 * /:controller/:action
 		 */
 		public function route($route)
 		{
-			if (!in_array(__FUNCTION__, $this->_invoked))
-				$this->_invoked[] = __FUNCTION__;
+			if (!in_array('app', $this->_invoked))
+			{
+				throw new exception('please specify an app first');
 
-			$this->_routes[] = $route;
+			} else {
+
+				if (!in_array(__FUNCTION__, $this->_invoked))
+					$this->_invoked[] = __FUNCTION__;
+
+				$index = count($this->_routes) > 0 ? count($this->_routes) - 1 : 0;
+
+				$this->_routes[$index] = array('app' => $this->_routes[$index], 'string' => $route);
+			}
 
 			return $this;
 		}
@@ -65,7 +89,7 @@
 				$index  = count($this->_routes) > 0 ? count($this->_routes) - 1 : 0;
 				$_route = $this->_route('/' . $controller . '/' . $action . '/' . implode('/', $arguments));
 
-				$this->_routes[$index] = array('string' => $this->_routes[$index]) + $_route;
+				$this->_routes[$index] = $this->_routes[$index] + $_route;
 			}
 
 			return $this;
@@ -73,7 +97,7 @@
 
 		public function go()
 		{
-			if (in_array('route', $this->_invoked) && in_array('to', $this->_invoked))
+			if (in_array('app', $this->_invoked) && in_array('route', $this->_invoked) && in_array('to', $this->_invoked))
 			{
 				$request = preg_replace('/\.(php|php5|html|htm|shtml|jhtml)$/im', '', $_SERVER['REQUEST_URI']);
 
@@ -83,7 +107,39 @@
 					{
 						if (preg_match('$' . str_replace(array('*'), array('(.*)'), $route['string']) . '$', $request))
 						{
-							call_user_func_array(array($route['controller']['translated'], $route['action']['translated']), $route['params']);
+							$c = $route['controller']['translated'];
+
+							if (class_exists($c))
+							{
+								$c = new $c();
+								$p = $route['params'];
+								$j = method_exists($c, $route['action']['translated']);
+								$i = is_callable(array($c, $route['action']['translated']));
+								$n = method_exists($c, '__call');
+								$x = is_callable(array($c, '__call'));
+
+								if (($j && $i) || ($n && $x))
+								{
+									if (count($p) == 3)
+										$c->{$route['action']['translated']}($p[0], $p[1], $p[2]);
+									else if (count($p) == 2)
+										$c->{$route['action']['translated']}($p[0], $p[1]);
+									else if (count($p) == 1)
+										$c->{$route['action']['translated']}($p[0]);
+									else if (count($p) == 0)
+										$c->{$route['action']['translated']}();
+									else
+										call_user_func_array(array($c, $route['action']['translated']), $p);
+
+								} else {
+
+									echo '404';
+								}
+
+							} else {
+
+								echo '4o4';
+							}
 
 							break;
 						}

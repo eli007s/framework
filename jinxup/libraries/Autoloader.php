@@ -2,27 +2,33 @@
 
 	class JXP_Autoloader
 	{
+		private static $_apps = array();
+
 		public static function autoload($class)
 		{
-			echo $class;
-			echo '<br />';
+			$_c = explode('_', $class);
+			$_c = array('name' => $_c[0], 'type' => $_c[1], 'path' => self::search($_c[0], $_c[1]));
+
+			require_once $_c['path'];
 		}
 
-		private static function search($class, $_class, $path)
+		public static function addApp($app)
+		{
+			self::$_apps[] = $app;
+		}
+
+		private static function search($name, $type)
 		{
 			$foundClassFilename = null;
-			$potentialFileNames = [$_class[0], $class];
+			$potentialFileNames = array($name, $type[0] . $name, $name . '_' . $type); // index.php cIndex.php index_controller.php
 
-			if (isset($_class[1]))
-				$potentialFileNames[] = $_class[1][0] . $_class[0];
-
-			if (is_dir($path))
+			if (is_dir(end(self::$_apps)))
 			{
-				foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $dir)
+				foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(end(self::$_apps))) as $dir)
 				{
 					if ($dir->isFile())
 					{
-						preg_match('#(' . str_replace('\\', '\\\\', $_class[0]) . ')#i', $dir->getBasename(), $match);
+						preg_match('#(' . str_replace('\\', '\\\\', $name) . ')#i', $dir->getBasename(), $match);
 
 						$match = array_filter($match);
 
