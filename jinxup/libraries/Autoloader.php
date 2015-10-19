@@ -1,44 +1,55 @@
 <?php
 
-	class JXP_Autoloader
+	class JXP_Autoloader extends Jinxup
 	{
-		private static $_apps = array();
+		public static $path = null;
+
+		private static $_registry = array();
 
 		public static function autoload($class)
 		{
-			$_c = explode('_', $class);
-			$_c = array('name' => $_c[0], 'type' => $_c[1], 'path' => self::search($_c[0], $_c[1]));
-
-			require_once $_c['path'];
-		}
-
-		public static function addApp($app)
-		{
-			self::$_apps[] = $app;
-		}
-
-		private static function search($name, $type)
-		{
-			$foundClassFilename = null;
-			$potentialFileNames = array($name, $type[0] . $name, $name . '_' . $type); // index.php cIndex.php index_controller.php
-
-			if (is_dir(end(self::$_apps)))
+			if (!in_array($class, self::$_registry))
 			{
-				foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(end(self::$_apps))) as $dir)
+				$rawArray           = explode('_', $class);
+				$foundClassFilename = null;
+
+				if ($rawArray[0] == 'JXP')
 				{
-					if ($dir->isFile())
+					$pathToFile = __DIR__;
+					$fileNames  = array(
+						ucfirst($rawArray[1])
+					);
+
+				} else {
+
+					if (strpos($rawArray[0], '\\') !== false)
 					{
-						preg_match('#(' . str_replace('\\', '\\\\', $name) . ')#i', $dir->getBasename(), $match);
+						$ns = explode('\\', $rawArray[0]);
 
-						$match = array_filter($match);
+						$rawArray[0] = end($ns);
+					}
 
-						if (!empty($match))
+					$pathToFile = self::$path;
+					$fileNames  = array(
+						$rawArray[0],
+						strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),
+						$rawArray[0] . '_' . strtolower($rawArray[1])
+					);
+				}
+
+				if (is_dir($pathToFile))
+				{
+					foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToFile)) as $dir)
+					{
+						if ($dir->isFile())
 						{
-							foreach ($potentialFileNames as $fileName)
+							foreach ($fileNames as $fileName)
 							{
 								if (strtolower($fileName . '.php') == strtolower($dir->getBasename()))
 								{
-									$foundClassFilename = $dir->getPathname();
+									self::$_registry[] = $class;
+
+									require_once $dir->getPathname();
 
 									break;
 								}
@@ -47,7 +58,5 @@
 					}
 				}
 			}
-
-			return $foundClassFilename;
 		}
 	}

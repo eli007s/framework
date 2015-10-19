@@ -13,6 +13,7 @@
 			"controller" : {},
 			"actions"    : {},
 			"vendors"    : {},
+			"acl"        : {},
 			"meta"       : {
 
 				"author" : {
