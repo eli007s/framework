@@ -165,7 +165,7 @@
 				}
 			}
 
-			self::_viewInit($_vars, false);
+			//self::_viewInit($_vars, false);
 
 			if (substr($tpl, -4) == '.php')
 			{

@@ -12,7 +12,7 @@
 		private static $_version    = '1.0b';
 		private static $_appFlag    = '';
 		private static $_namespace  = null;
-		private static $_routes     = array('controller' => 'Index_Controller', 'action' => 'indexAction');
+		private static $_routes     = array('controller' => array('translated' => 'Index', 'raw' => 'Index_Controller'), 'action' => array('translated' => 'index', 'raw' => 'indexAction'));
 
 		public function __construct()
 		{
