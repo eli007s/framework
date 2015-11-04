@@ -2,9 +2,13 @@
 
 	class JXP_Autoloader extends Jinxup
 	{
-		public static $path = null;
-
+		private static $_path     = null;
 		private static $_registry = array();
+
+		public static function register($app)
+		{
+			self::$_path = getcwd() . DS . 'apps' . DS . $app;
+		}
 
 		public static function autoload($class)
 		{
@@ -29,7 +33,7 @@
 						$rawArray[0] = end($ns);
 					}
 
-					$pathToFile = self::$path;
+					$pathToFile = self::$_path;
 					$fileNames  = array(
 						$rawArray[0],
 						strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),

@@ -22,6 +22,9 @@
 
 	if (is_file($controller))
 	{
+		if (session_id() == '')
+			session_start();
+
 		require_once($controller);
 
 		$jinxup = new Jinxup();
