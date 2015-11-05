@@ -5,9 +5,9 @@
 		private static $_path     = null;
 		private static $_registry = array();
 
-		public static function register($app)
+		public static function register($path)
 		{
-			self::$_path = getcwd() . DS . 'apps' . DS . $app;
+			self::$_path = $path;
 		}
 
 		public static function autoload($class)

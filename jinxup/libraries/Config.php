@@ -4,18 +4,15 @@
 	{
 		private static $_config = array();
 
-		public static function load($config, $app = '__global__')
+		public static function load($config)
 		{
-			// if the config is from a file
-			$c = array();
-
 			if (is_dir($config) || is_file($config))
 			{
 				if (is_dir($config))
 				{
-					$c = JXP_Directory::scan($config);
+					$scan = JXP_Directory::scan($config);
 
-					foreach ($c as $k => $v)
+					foreach ($scan as $k => $v)
 						$c[] = $v['path'];
 
 				} else {
@@ -25,6 +22,8 @@
 
 				foreach ($c as $k => $v)
 				{
+					$contents = array();
+
 					if (strpos($v, '.json') !== false || strpos($v, '.tell') !== false)
 						$contents = json_decode(self::_cleanCommentsFromJson($v), true);
 
@@ -40,13 +39,18 @@
 			}
 		}
 
-		public function get($key, $app = '__global__')
+		public static function get($key)
 		{
-			return isset(self::$_config[$app][$key]) ? self::$_config[$app][$key] : array();
+			return isset(self::$_config[$key]) ? self::$_config[$key] : array();
 		}
 
 		private static function _cleanCommentsFromJson($file)
 		{
 			return preg_replace('@(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|((?<!:)//.*)|[\t\r\n]@i', '', file_get_contents($file));
+		}
+
+		private function _translate($config)
+		{
+
 		}
 	}
