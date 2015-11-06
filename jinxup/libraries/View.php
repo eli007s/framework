@@ -2,8 +2,10 @@
 
 	class JXP_View
 	{
+		private $_engine = 'smarty';
+
 		public static function render($view)
 		{
-			echo $view;
+			$app = JXP_App::controller();
 		}
 	}

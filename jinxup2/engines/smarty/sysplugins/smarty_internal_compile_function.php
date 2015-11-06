@@ -16,6 +16,7 @@
  */
 class Smarty_Internal_Compile_Function extends Smarty_Internal_CompileBase
 {
+
     /**
      * Attribute definition: Overwrites base class.
      *
@@ -23,6 +24,7 @@ class Smarty_Internal_Compile_Function extends Smarty_Internal_CompileBase
      * @see Smarty_Internal_CompileBase
      */
     public $required_attributes = array('name');
+
     /**
      * Attribute definition: Overwrites base class.
      *
@@ -30,6 +32,7 @@ class Smarty_Internal_Compile_Function extends Smarty_Internal_CompileBase
      * @see Smarty_Internal_CompileBase
      */
     public $shorttag_order = array('name');
+
     /**
      * Attribute definition: Overwrites base class.
      *
@@ -57,9 +60,8 @@ class Smarty_Internal_Compile_Function extends Smarty_Internal_CompileBase
         }
         unset($_attr['nocache']);
         $_name = trim($_attr['name'], "'\"");
-
-        $save = array($_attr, $compiler->parser->current_buffer,
-                      $compiler->template->has_nocache_code, $compiler->template->required_plugins, $compiler->template->caching);
+        $compiler->parent_compiler->templateProperties['tpl_function'][$_name] = array();
+        $save = array($_attr, $compiler->parser->current_buffer, $compiler->template->has_nocache_code, $compiler->template->required_plugins, $compiler->template->caching);
         $this->openTag($compiler, 'function', $save);
         // set flag that we are compiling a template function
         $compiler->compiles_template_function = true;
@@ -80,6 +82,7 @@ class Smarty_Internal_Compile_Function extends Smarty_Internal_CompileBase
  */
 class Smarty_Internal_Compile_Functionclose extends Smarty_Internal_CompileBase
 {
+
     /**
      * Compiler object
      *
@@ -90,11 +93,11 @@ class Smarty_Internal_Compile_Functionclose extends Smarty_Internal_CompileBase
     /**
      * Compiles code for the {/function} tag
      *
-     * @param  array  $args      array with attributes from parser
-     * @param  object $compiler  compiler object
-     * @param  array  $parameter array with compilation parameter
+     * @param  array                                       $args      array with attributes from parser
+     * @param object|\Smarty_Internal_TemplateCompilerBase $compiler  compiler object
+     * @param  array                                       $parameter array with compilation parameter
      *
-     * @return boolean true
+     * @return bool true
      */
     public function compile($args, Smarty_Internal_TemplateCompilerBase $compiler, $parameter)
     {
@@ -156,6 +159,7 @@ class Smarty_Internal_Compile_Functionclose extends Smarty_Internal_CompileBase
             }
             $output .= "ob_start();\n";
             $output .= $_paramsCode;
+            $output .= "\$_smarty_tpl->properties['saved_tpl_vars'][] = \$_smarty_tpl->tpl_vars;\n";
             $output .= "foreach (\$params as \$key => \$value) {\n\$_smarty_tpl->tpl_vars[\$key] = new Smarty_Variable(\$value);\n}";
             $output .= "\$params = var_export(\$params, true);\n";
             $output .= "echo \"/*%%SmartyNocache:{$compiler->template->properties['nocache_hash']}%%*/<?php ";
@@ -168,7 +172,8 @@ class Smarty_Internal_Compile_Functionclose extends Smarty_Internal_CompileBase
             $output .= "if (\\\$_smarty_tpl->tpl_vars[\\\$key] === \\\$value) \\\$saved_tpl_vars[\\\$key] = \\\$value;\n}\n";
             $output .= "\\\$_smarty_tpl->tpl_vars = \\\$saved_tpl_vars;?>\n";
             $output .= "/*/%%SmartyNocache:{$compiler->template->properties['nocache_hash']}%%*/\";\n?>";
-            $output .= "<?php echo str_replace('{$compiler->template->properties['nocache_hash']}', \$_smarty_tpl->properties['nocache_hash'], ob_get_clean());\n}\n}\n";
+            $output .= "<?php echo str_replace('{$compiler->template->properties['nocache_hash']}', \$_smarty_tpl->properties['nocache_hash'], ob_get_clean());\n";
+            $output .= "\$_smarty_tpl->tpl_vars = array_pop(\$_smarty_tpl->properties['saved_tpl_vars']);\n}\n}\n";
             $output .= "/*/ {$_funcName}_nocache */\n\n";
             $output .= "?>\n";
             $compiler->parser->current_buffer->append_subtree(new Smarty_Internal_ParseTree_Tag($compiler->parser, $output));

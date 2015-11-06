@@ -1,11 +1,14 @@
 <?php
 
-	class Jinxup
+use Aws\DynamoDb\Enum\ScalarAttributeType;
+
+class Jinxup
 	{
 		private $_app      = null;
 		private $_route    = array();
 		private $_registry = array();
 		private $_routed   = false;
+		private $_ns       = '\\';
 
 		public function __construct()
 		{
@@ -23,6 +26,8 @@
 
 			JXP_Error::register();
 			JXP_Config::load(getcwd() . DS . 'config');
+
+
 		}
 
 		public function __toString()
@@ -122,6 +127,7 @@
 		 * @param $controller string
 		 * @param $action string|array
 		 * @param $arguments array
+		 * @throws exception
 		 * @return object
 		 */
 		public function to($controller = 'index', $action = 'index', $arguments = array())
@@ -146,110 +152,17 @@
 
 				if ($continue === true)
 				{
-					if (is_array($action))
-					{
-						$arguments = $action;
-						$action    = 'index';
-					}
-
-					$route    = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
-					$_route   = explode('/', $route);
-					$params   = array_values(array_filter($_route));
-					$_project = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
-
-					if ($params[0] == $_project)
-						array_shift($params);
-
-					if (!empty($params))
-					{
-						if ($params[0] != '-')
-						{
-							$prefix = is_numeric($params[0][0]) ? 'n' : null;
-							$prefix = $params[0][0] == '_' ? 'u' : $prefix;
-							$prefix = $params[0][0] == '-' ? 'd' : $prefix;
-
-							$controller = array_shift($params);
-
-							$_r['controller']['raw']        = $controller;
-							$_r['controller']['translated'] = $prefix . str_replace('-', '_', $controller) . '_Controller';
-
-						} else {
-
-							array_shift($params);
-
-							$_r['controller']['raw']        = 'index';
-							$_r['controller']['translated'] = 'Index_Controller';
-						}
-
-					} else {
-
-						$_r['controller'] = array('raw' => 'index', 'translated' => 'Index_Controller');
-					}
-
-					if (!empty($params))
-					{
-						if ($params[0] != '-')
-						{
-							$prefix = is_numeric($params[0][0]) ? 'n' : null;
-							$prefix = $params[0][0] == '_' ? 'u' : $prefix;
-							$prefix = $params[0][0] == '-' ? 'd' : $prefix;
-
-							$action = array_shift($params);
-
-							$_r['action']['raw']        = $action;
-							$_r['action']['translated'] = $prefix . str_replace('-', '_', $action) . 'Action';
-
-						} else {
-
-							array_shift($params);
-
-							$_r['action']['raw']        = 'index';
-							$_r['action']['translated'] = 'indexAction';
-						}
-
-					} else {
-
-						$_r['action'] = array('raw' => 'index', 'translated' => 'indexAction');
-					}
-
-					$_r['params'] = $params;
-
-					$this->_route += $_r;
+					$this->_route += $this->_route($controller, $action, $arguments);
 
 					$c = $this->_route['controller']['translated'];
-					$n = '\\';
 
 					$config = array_change_key_case(JXP_Config::get('apps'), CASE_LOWER);
 
-					if (isset($config['::namespace']))
-					{
-						$n .= $config['::::namespace'] . '\\';
+					$this->_ns = $this->_ns($config);
 
-					} else {
+					$this->_init('apps', 'start', $config);
 
-						$app = strtolower($this->_app);
-
-						if (isset($config[$app]['::namespace']))
-						{
-							$n .= $config[$app]['::namespace'] . '\\';
-
-						} else {
-
-							$controllers = array_change_key_case($config[$app]['controller'], CASE_LOWER);
-
-							if (isset($controllers['::namespace']))
-							{
-								$n .= $controllers['::namespace'] . '\\';
-
-							} else {
-
-								if (isset($controllers[strtolower($this->_route['controller']['raw'])]['::namespace']))
-									$n .= $controllers[strtolower($this->_route['controller']['raw'])]['::namespace'] . '\\';
-							}
-						}
-					}
-
-					$c = $n . $c;
+					$c = $this->_ns . $c;
 
 					if (class_exists($c))
 					{
@@ -260,8 +173,12 @@
 						$n = method_exists($c, '__call');
 						$x = is_callable(array($c, '__call'));
 
+						$this->_init('controller', 'start', $config);
+
 						if (($j && $i) || ($n && $x))
 						{
+							$this->_init('action', 'start', $config);
+
 							if (count($p) == 3)
 								$c->{$this->_route['action']['translated']}($p[0], $p[1], $p[2]);
 							else if (count($p) == 2)
@@ -272,6 +189,9 @@
 								$c->{$this->_route['action']['translated']}();
 							else
 								call_user_func_array(array($c, $this->_route['action']['translated']), $p);
+
+							$this->_init('action', 'end', $config);
+							$this->_init('controller', 'end', $config);
 
 						} else {
 
@@ -295,13 +215,199 @@
 			return $this;
 		}
 
-		public function errors()
+		private function _init($scope, $pointer, $config)
 		{
-			return $this->_errors;
+			$app = strtolower($this->_app);
+
+			if ($scope == 'app' && isset($config[$app]['init']))
+				$init = $config[$app]['init'];
+
+			if ($scope == 'controller')
+			{
+				$controllers = array_change_key_case($config[$app][$scope], CASE_LOWER);
+
+				if (isset($controllers[strtolower($this->_route[$scope]['raw'])]['init']))
+					$init = $controllers[strtolower($this->_route[$scope]['raw'])]['init'];
+			}
+
+			if ($scope == 'action')
+			{
+				$actions = array_change_key_case($config[$app][$scope], CASE_LOWER);
+
+				if (isset($actions[strtolower($this->_route[$scope]['raw'])]['init']))
+					$init = $actions[strtolower($this->_route[$scope]['raw'])]['init'];
+			}
+
+			if (isset($init[$pointer]))
+			{
+				$pos = $init[$pointer];
+
+				if (isset($pos['cmd']))
+				{
+					if (!is_array($pos['cmd']))
+						$pos['cmd'] = array($pos['cmd']);
+
+					foreach ($pos['cmd'] as $k => $v)
+						eval($v);
+				}
+
+				if (isset($pos['call']))
+				{
+					$c = $this->_route['controller']['translated'];
+
+					if (!is_array($pos['call']))
+						$pos['call'] = array($pos['call']);
+
+					foreach ($pos['call'] as $k => $v)
+					{
+						if (isset($v['controller']))
+						{
+							$c = $this->_ns . $c;
+							$p = array();
+							$_c = $c;
+
+							if (class_exists($c))
+							{
+								$c = new $c();
+
+								if (isset($v['action']))
+									$a = $v['action'];
+
+								if (isset($v['params']))
+									$p = $v['params'];
+
+								$route = $this->_route($_c, $a, $p);
+
+								$j = method_exists($c, $route['action']['translated']);
+								$i = is_callable(array($c, $route['action']['translated']));
+								$n = method_exists($c, '__call');
+								$x = is_callable(array($c, '__call'));
+
+								if (($j && $i) || ($n && $x))
+								{
+									if (count($p) == 3)
+										$c->{$route['action']['translated']}($p[0], $p[1], $p[2]);
+									else if (count($p) == 2)
+										$c->{$route['action']['translated']}($p[0], $p[1]);
+									else if (count($p) == 1)
+										$c->{$route['action']['translated']}($p[0]);
+									else if (count($p) == 0)
+										$c->{$route['action']['translated']}();
+									else
+										call_user_func_array(array($c, $route['action']['translated']), $p);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
-		public function timers()
+		private function _ns($config)
 		{
-			return array();
+			$n           = '\\';
+			$app         = strtolower($this->_app);
+			$controllers = array_change_key_case($config[$app]['controller'], CASE_LOWER);
+
+			if (isset($config['::namespace']))
+			{
+				$n .= $config['::::namespace'] . '\\';
+
+			} else {
+
+
+				if (isset($config[$app]['::namespace']))
+				{
+					$n .= $config[$app]['::namespace'] . '\\';
+
+				} else {
+
+
+					if (isset($controllers['::namespace']))
+					{
+						$n .= $controllers['::namespace'] . '\\';
+
+					} else {
+
+						if (isset($controllers[strtolower($this->_route['controller']['raw'])]['::namespace']))
+							$n .= $controllers[strtolower($this->_route['controller']['raw'])]['::namespace'] . '\\';
+					}
+				}
+			}
+
+			return $n == '\\\\' ? '\\' : $n;
+		}
+
+		private function _route($controller, $action, $arguments)
+		{
+			if (is_array($action))
+			{
+				$arguments = $action;
+				$action    = 'index';
+			}
+
+			$route    = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
+			$_route   = explode('/', $route);
+			$params   = array_values(array_filter($_route));
+			$_project = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
+
+			if ($params[0] == $_project)
+				array_shift($params);
+
+			if (!empty($params))
+			{
+				if ($params[0] != '-')
+				{
+					$prefix = is_numeric($params[0][0]) ? 'n' : null;
+					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
+					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
+
+					$controller = array_shift($params);
+
+					$_r['controller']['raw']        = $controller;
+					$_r['controller']['translated'] = $prefix . str_replace('-', '_', $controller) . '_Controller';
+
+				} else {
+
+					array_shift($params);
+
+					$_r['controller']['raw']        = 'index';
+					$_r['controller']['translated'] = 'Index_Controller';
+				}
+
+			} else {
+
+				$_r['controller'] = array('raw' => 'index', 'translated' => 'Index_Controller');
+			}
+
+			if (!empty($params))
+			{
+				if ($params[0] != '-')
+				{
+					$prefix = is_numeric($params[0][0]) ? 'n' : null;
+					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
+					$prefix = $params[0][0] == '-' ? 'd' : $prefix;
+
+					$action = array_shift($params);
+
+					$_r['action']['raw']        = $action;
+					$_r['action']['translated'] = $prefix . str_replace('-', '_', $action) . 'Action';
+
+				} else {
+
+					array_shift($params);
+
+					$_r['action']['raw']        = 'index';
+					$_r['action']['translated'] = 'indexAction';
+				}
+
+			} else {
+
+				$_r['action'] = array('raw' => 'index', 'translated' => 'indexAction');
+			}
+
+			$_r['params'] = $params;
+
+			return $_r;
 		}
 	}
