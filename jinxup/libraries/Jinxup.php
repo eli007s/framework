@@ -1,14 +1,11 @@
 <?php
 
-use Aws\DynamoDb\Enum\ScalarAttributeType;
-
-class Jinxup
+	class Jinxup
 	{
-		private $_app      = null;
-		private $_route    = array();
-		private $_registry = array();
-		private $_routed   = false;
-		private $_ns       = '\\';
+		private $_route     = array();
+		private $_registry  = array();
+		private $_namespace = '\\';
+		private $_routed    = false;
 
 		public function __construct()
 		{
@@ -26,8 +23,6 @@ class Jinxup
 
 			JXP_Error::register();
 			JXP_Config::load(getcwd() . DS . 'config');
-
-
 		}
 
 		public function __toString()
@@ -59,10 +54,9 @@ class Jinxup
 		{
 			if (!$this->_routed)
 			{
-				// If the app hasn't been manually routed we continue with inferred app routing
 				$_request = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
 
-				if (is_null($this->_app))
+				if (is_null($this->app->loaded()))
 				{
 					$config = JXP_Config::get('apps');
 
@@ -95,7 +89,7 @@ class Jinxup
 		{
 			if (is_dir(getcwd() . DS . 'apps' . DS . $app))
 			{
-				$this->_app = $app;
+				$this->app->set($app);
 
 				JXP_Autoloader::register(getcwd() . DS . 'apps' . DS . $app);
 				JXP_Config::load(getcwd() . DS . 'apps' . DS . $app . DS . 'config');
@@ -115,7 +109,7 @@ class Jinxup
 		 */
 		public function route($route)
 		{
-			if (!is_null($this->_app))
+			if (!is_null($this->app->loaded()))
 				$this->_route = array('string' => $route);
 			else
 				throw new exception ('no app loaded');
@@ -135,72 +129,108 @@ class Jinxup
 			if ($this->_routed === false && isset($this->_route['string']))
 			{
 				$controller = strtolower($controller);
-				$continue   = false;
 
 				if (strpos($this->_route['string'], '*') !== false)
 				{
 					if (preg_match('#(' . str_replace('*', '.*', $this->_route['string']) . ')#i', $_SERVER['REQUEST_URI']))
-						$continue = true;
+						$this->_routed = true;
 
 				} else {
 
 					if ($this->_route['string'] == $_SERVER['REQUEST_URI'])
-						$continue = true;
+						$this->_routed = true;
 				}
 
-				$this->_routed = $continue;
-
-				if ($continue === true)
+				if ($this->_routed === true)
 				{
 					$this->_route += $this->_route($controller, $action, $arguments);
 
-					$c = $this->_route['controller']['translated'];
+					$config  = $this->config->app($this->app->loaded());
+					$invoked = array();
 
-					$config = array_change_key_case(JXP_Config::get('apps'), CASE_LOWER);
-
-					$this->_ns = $this->_ns($config);
-
-					$this->_init('apps', 'start', $config);
-
-					$c = $this->_ns . $c;
-
-					if (class_exists($c))
+					foreach ($config as $k => $v)
 					{
-						$c = new $c();
-						$p = $this->_route['params'];
-						$j = method_exists($c, $this->_route['action']['translated']);
-						$i = is_callable(array($c, $this->_route['action']['translated']));
-						$n = method_exists($c, '__call');
-						$x = is_callable(array($c, '__call'));
+						$init = array();
 
-						$this->_init('controller', 'start', $config);
+						if ($k == '::namespace')
+							$this->config->setNamespace($v);
 
-						if (($j && $i) || ($n && $x))
+						if ($k == 'view')
 						{
-							$this->_init('action', 'start', $config);
-
-							if (count($p) == 3)
-								$c->{$this->_route['action']['translated']}($p[0], $p[1], $p[2]);
-							else if (count($p) == 2)
-								$c->{$this->_route['action']['translated']}($p[0], $p[1]);
-							else if (count($p) == 1)
-								$c->{$this->_route['action']['translated']}($p[0]);
-							else if (count($p) == 0)
-								$c->{$this->_route['action']['translated']}();
-							else
-								call_user_func_array(array($c, $this->_route['action']['translated']), $p);
-
-							$this->_init('action', 'end', $config);
-							$this->_init('controller', 'end', $config);
-
-						} else {
-
-							throw new exception('404');
+							if (isset($v['::default']) && isset($v[$v['::default']]))
+								$this->config->setView($v['::default'], $v[$v['::default']]);
 						}
 
-					} else {
+						if ($k == 'init')
+							$this->_init('start', $v);
 
-						throw new exception('404');
+						if ($k == 'controller')
+						{
+							if (isset($v['view']))
+							{
+								if (isset($v['view']['::use']) && isset($v['view'][$v['view']['::use']]))
+								{
+									$view = array_merge_recursive($this->config->getView(), $v['view'][$v['view']['::use']]);
+								}
+									$this->config->setView($v['view']['::use'], $view);
+							}
+
+							if (isset($v['init']))
+								$this->_init('start', $v['init']);
+
+							if (isset($v[$this->_route['controller']['raw']]))
+							{
+								if (isset($v[$this->_route['controller']['raw']]['init']))
+									$init = $v[$this->_route['controller']['raw']]['init'];
+
+								$invoked['controller'] = $this->_callController($this->_route, $init);
+							}
+
+							if (isset($v['init']))
+								$this->_init('end', $v['init']);
+						}
+
+						if (!isset($invoked['controller']))
+							$invoked['controller'] = $this->_callController($this->_route);
+
+						if ($k == 'action')
+						{
+							if (isset($v['view']))
+							{
+								if (isset($v['view']['::use']) && isset($v['view'][$v['view']['::use']]))
+								{
+									$view = array_merge_recursive($this->config->getView(), $v['view'][$v['view']['::use']]);
+								}
+								$this->config->setView($v['view']['::use'], $view);
+							}
+
+							if (isset($v['init']))
+								$this->_init('start', $v['init']);
+
+							if (isset($v[$this->_route['action']['raw']]))
+							{
+								$invoked['action'] = true;
+
+								if (isset($v[$this->_route['action']['raw']]['init']))
+									$init = $v[$this->_route['action']['raw']]['init'];
+
+								if (isset($invoked['controller']))
+								{
+									$invoked['action'] = true;
+
+									$this->_callAction($invoked['controller'], $this->_route, $init);
+								}
+							}
+
+							if (isset($v['init']))
+								$this->_init('end', $v['init']);
+						}
+
+						if (!isset($invoked['action']))
+							$this->_callAction($invoked['controller'], $this->_route);
+
+						if ($k == 'init')
+							$this->_init('end', $v);
 					}
 				}
 			}
@@ -215,127 +245,96 @@ class Jinxup
 			return $this;
 		}
 
-		private function _init($scope, $pointer, $config)
+		private function _init($cursor, $config)
 		{
-			$app = strtolower($this->_app);
-
-			if ($scope == 'app' && isset($config[$app]['init']))
-				$init = $config[$app]['init'];
-
-			if ($scope == 'controller')
+			foreach ($config as $k => $v)
 			{
-				$controllers = array_change_key_case($config[$app][$scope], CASE_LOWER);
+				if ($k == 'cmd')
+					$this->_cmd($v);
 
-				if (isset($controllers[strtolower($this->_route[$scope]['raw'])]['init']))
-					$init = $controllers[strtolower($this->_route[$scope]['raw'])]['init'];
-			}
-
-			if ($scope == 'action')
-			{
-				$actions = array_change_key_case($config[$app][$scope], CASE_LOWER);
-
-				if (isset($actions[strtolower($this->_route[$scope]['raw'])]['init']))
-					$init = $actions[strtolower($this->_route[$scope]['raw'])]['init'];
-			}
-
-			if (isset($init[$pointer]))
-			{
-				$pos = $init[$pointer];
-
-				if (isset($pos['cmd']))
+				if ($k == $cursor)
 				{
-					if (!is_array($pos['cmd']))
-						$pos['cmd'] = array($pos['cmd']);
+					if (isset($v['::namespace']))
+						$this->config->setNamespace($v['::namespace']);
 
-					foreach ($pos['cmd'] as $k => $v)
-						eval($v);
-				}
+					if (isset($v['cmd']))
+						$this->_cmd($v['cmd']);
 
-				if (isset($pos['call']))
-				{
-					$c = $this->_route['controller']['translated'];
-
-					if (!is_array($pos['call']))
-						$pos['call'] = array($pos['call']);
-
-					foreach ($pos['call'] as $k => $v)
+					if (isset($v['call']))
 					{
-						if (isset($v['controller']))
+						if (!isset($v['call']['disabled']) || ($v['call']['disabled'] == 0 || (string)$v['call']['disabled'] == 'false'))
 						{
-							$c = $this->_ns . $c;
-							$p = array();
-							$_c = $c;
+							if (isset($v['call']['::namespace']))
+								$this->config->setNamespace($v['::namespace']);
 
-							if (class_exists($c))
-							{
-								$c = new $c();
+							$c = isset($v['call']['controller']) && !empty($v['call']['controller']) ? $v['call']['controller'] : 'index';
+							$a = isset($v['call']['action']) && !empty($v['call']['action']) ? $v['call']['action'] : 'index';
+							$p = isset($v['call']['params']) ? $v['call']['params'] : array();
 
-								if (isset($v['action']))
-									$a = $v['action'];
+							$route = $this->_route($c, $a, $p);
 
-								if (isset($v['params']))
-									$p = $v['params'];
-
-								$route = $this->_route($_c, $a, $p);
-
-								$j = method_exists($c, $route['action']['translated']);
-								$i = is_callable(array($c, $route['action']['translated']));
-								$n = method_exists($c, '__call');
-								$x = is_callable(array($c, '__call'));
-
-								if (($j && $i) || ($n && $x))
-								{
-									if (count($p) == 3)
-										$c->{$route['action']['translated']}($p[0], $p[1], $p[2]);
-									else if (count($p) == 2)
-										$c->{$route['action']['translated']}($p[0], $p[1]);
-									else if (count($p) == 1)
-										$c->{$route['action']['translated']}($p[0]);
-									else if (count($p) == 0)
-										$c->{$route['action']['translated']}();
-									else
-										call_user_func_array(array($c, $route['action']['translated']), $p);
-								}
-							}
+							$this->_callAction($this->_callController($this->_route($c, $a, $p)), $route);
 						}
 					}
 				}
 			}
 		}
 
-		private function _ns($config)
+		private function _cmd($cmd)
 		{
-			$n           = '\\';
-			$app         = strtolower($this->_app);
-			$controllers = array_change_key_case($config[$app]['controller'], CASE_LOWER);
+			if (!is_array($cmd))
+				$cmd = array($cmd);
 
-			if (isset($config['::namespace']))
+			foreach ($cmd as $k => $v)
+				eval($v);
+		}
+
+		private function _callController($route, $init = array())
+		{
+			$c = $route['controller']['translated'];
+			$c = $this->config->getNamespace() . $c;
+
+			if (class_exists($c))
 			{
-				$n .= $config['::::namespace'] . '\\';
+				if (!empty($init))
+					$this->_init('start', $init);
 
-			} else {
+				$c = new $c();
 
-
-				if (isset($config[$app]['::namespace']))
-				{
-					$n .= $config[$app]['::namespace'] . '\\';
-
-				} else {
-
-
-					if (isset($controllers['::namespace']))
-					{
-						$n .= $controllers['::namespace'] . '\\';
-
-					} else {
-
-						if (isset($controllers[strtolower($this->_route['controller']['raw'])]['::namespace']))
-							$n .= $controllers[strtolower($this->_route['controller']['raw'])]['::namespace'] . '\\';
-					}
-				}
+				if (!empty($init))
+					$this->_init('end', $init);
 			}
 
-			return $n == '\\\\' ? '\\' : $n;
+			return $c;
+		}
+
+		private function _callAction($c, $route, $init = array())
+		{
+			$p = $route['params'];
+			$j = method_exists($c, $route['action']['translated']);
+			$i = is_callable(array($c, $route['action']['translated']));
+			$n = method_exists($c, '__call');
+			$x = is_callable(array($c, '__call'));
+
+			if (($j && $i) || ($n && $x))
+			{
+				if (!empty($init))
+					$this->_init('start', $init);
+
+				if (count($p) == 3)
+					$c->{$route['action']['translated']}($p[0], $p[1], $p[2]);
+				else if (count($p) == 2)
+					$c->{$route['action']['translated']}($p[0], $p[1]);
+				else if (count($p) == 1)
+					$c->{$route['action']['translated']}($p[0]);
+				else if (count($p) == 0)
+					$c->{$route['action']['translated']}();
+				else
+					call_user_func_array(array($c, $route['action']['translated']), $p);
+
+				if (!empty($init))
+					$this->_init('end', $init);
+			}
 		}
 
 		private function _route($controller, $action, $arguments)

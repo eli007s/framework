@@ -2,10 +2,23 @@
 
 	class JXP_View
 	{
-		private $_engine = 'smarty';
+		private static $_engine = array('smarty');
 
 		public static function render($view)
 		{
-			$app = JXP_App::controller();
+			self::_engine();
+
+
+		}
+
+		private static function _engine()
+		{
+			$engine = JXP_Config::getView();
+
+			if (!empty($engine))
+				self::$_engine = $engine;
+
+			echo '<pre>', print_r($engine, true), '</pre>';
+
 		}
 	}

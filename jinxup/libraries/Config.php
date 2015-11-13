@@ -2,7 +2,10 @@
 
 	class JXP_Config
 	{
-		private static $_config = array();
+		private static $_config    = array();
+		private static $_namespace = '\\';
+		private static $_view      = array();
+		private static $_database  = array();
 
 		public static function load($config)
 		{
@@ -39,9 +42,41 @@
 			}
 		}
 
-		public static function get($key)
+		public static function app($app)
 		{
-			return isset(self::$_config[$key]) ? self::$_config[$key] : array();
+			$app    = strtolower($app);
+			$return = array();
+			$config = self::array_change_key_case_recursive(self::$_config['apps']);
+
+			if (isset($config[$app]))
+				$return = $config[$app];
+
+			return $return;
+		}
+
+		public static function apps()
+		{
+			return self::$_config['apps'];
+		}
+
+		public static function setNamespace($ns)
+		{
+			self::$_namespace = '\\' . ltrim($ns, '\\');
+		}
+
+		public static function getNamespace()
+		{
+			return self::$_namespace == '\\' ? self::$_namespace : self::$_namespace . '\\';
+		}
+
+		public static function setView($view, $config)
+		{
+			self::$_view[$view] = $config;
+		}
+
+		public static function getView()
+		{
+			return self::$_view;
 		}
 
 		private static function _cleanCommentsFromJson($file)
@@ -52,5 +87,17 @@
 		private function _translate($config)
 		{
 
+		}
+
+		private static function array_change_key_case_recursive($arr, $case = CASE_LOWER)
+		{
+			return array_map(function($item) use($case) {
+
+				if(is_array($item))
+					$item = self::array_change_key_case_recursive($item, $case);
+
+				return $item;
+
+			}, array_change_key_case($arr, $case));
 		}
 	}
