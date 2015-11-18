@@ -18,7 +18,7 @@
 			if (!empty($engine))
 				self::$_engine = $engine;
 
-			echo '<pre>', print_r($engine, true), '</pre>';
+			//echo '<pre>', print_r(debug_backtrace(), true), '</pre>';
 
 		}
 	}

@@ -23,15 +23,19 @@
 
 			JXP_Error::register();
 			JXP_Config::load(getcwd() . DS . 'config');
+			JXP_App::discover();
 		}
 
 		public function __toString()
 		{
-			return 'Jinxup-v1.2b';
+			return 'Jinxup-v2.0b';
 		}
 
 		public function __get($name)
 		{
+			echo $name;
+
+
 			$return = null;
 			$class  = 'JXP_' . $name;
 
@@ -56,8 +60,8 @@
 			{
 				$_request = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
 
-				if (is_null($this->app->loaded()))
-				{
+				if (is_null(JXP_App::loaded()))
+				{ echo 'app?';
 					$config = JXP_Config::get('apps');
 
 					if (isset($config['::default']))
@@ -89,10 +93,9 @@
 		{
 			if (is_dir(getcwd() . DS . 'apps' . DS . $app))
 			{
-				$this->app->set($app);
+				JXP_App::set($app);
 
 				JXP_Autoloader::register(getcwd() . DS . 'apps' . DS . $app);
-				JXP_Config::load(getcwd() . DS . 'apps' . DS . $app . DS . 'config');
 
 			} else {
 
@@ -109,7 +112,7 @@
 		 */
 		public function route($route)
 		{
-			if (!is_null($this->app->loaded()))
+			if (!is_null(JXP_App::loaded()))
 				$this->_route = array('string' => $route);
 			else
 				throw new exception ('no app loaded');
@@ -145,92 +148,169 @@
 				{
 					$this->_route += $this->_route($controller, $action, $arguments);
 
-					$config  = $this->config->app($this->app->loaded());
-					$invoked = array();
+					$stack  = array();
+					$config = JXP_Config::load(getcwd() . DS . 'apps' . DS . JXP_App::loaded() . DS . 'config');
 
-					foreach ($config as $k => $v)
+					if (!empty($config) && isset($config['apps'][JXP_App::loaded()]))
+						$config = $config['apps'][JXP_App::loaded()];
+					else
+						$config = array();
+
+					if (!empty($config))
 					{
-						$init = array();
+						if (isset($config['namespace']) && !empty($config['namespace']))
+							$this->_namespace = $config['namespace'];
 
-						if ($k == '::namespace')
-							$this->config->setNamespace($v);
+						if (isset($config['view']))
+							JXP_Config::setView($config['view']);
 
-						if ($k == 'view')
+						if (isset($config['init']))
 						{
-							if (isset($v['::default']) && isset($v[$v['::default']]))
-								$this->config->setView($v['::default'], $v[$v['::default']]);
+							$disabled = false;
+
+							if (isset($config['init']['disabled']) && $config['init']['disabled'] == 1 || (string)$config['init']['disabled'] == 'true')
+								$disabled = true;
+
+							if ($disabled == false)
+							{
+								if (isset($config['init']['start']))
+									$this->_init($config['init']['start']);
+							}
 						}
 
-						if ($k == 'init')
-							$this->_init('start', $v);
-
-						if ($k == 'controller')
+						if (isset($config['invoked']))
 						{
-							if (isset($v['view']))
+							foreach ($config['invoked'] as $k => $v)
 							{
-								if (isset($v['view']['::use']) && isset($v['view'][$v['view']['::use']]))
+								if (isset($v['controller']))
 								{
-									$view = array_merge_recursive($this->config->getView(), $v['view'][$v['view']['::use']]);
+									if (isset($v['controller']['name']))
+									{
+										if ($this->_route['controller']['raw'] == $v['controller']['name'] || $this->_route['controller']['translated'] == $v['controller']['name'])
+										{
+											if (isset($v['controller']['view']))
+												JXP_Config::setView($v['controller']['view']);
+
+											$namespace = isset($v['controller']['namespace']) && !empty($v['controller']['namespace']) ? $v['controller']['namespace'] : $this->_namespace;
+
+											if (isset($v['controller']['init']))
+											{
+												$disabled = false;
+
+												if (isset($v['controller']['init']['disabled']) && ($v['controller']['init']['disabled'] == 1 || (string)$v['controller']['init']['disabled'] == 'true'))
+													$disabled = true;
+
+												if ($disabled == false)
+												{
+													if (isset($v['controller']['init']))
+														$stack['controller']['init'] = $v['controller']['init'];
+
+													$stack['controller']['invoke'] = $namespace . '\\' . $this->_route['controller']['translated'];
+												}
+											}
+										}
+									}
 								}
-									$this->config->setView($v['view']['::use'], $view);
+
+								if (isset($v['action']))
+								{
+									if (isset($v['action']['name']))
+									{
+										if ($this->_route['action']['raw'] == $v['action']['name'] || $this->_route['action']['translated'] == $v['action']['name'])
+										{
+											if (isset($v['action']['view']))
+												JXP_Config::setView($v['action']['view']);
+
+											if (isset($v['action']['init']))
+											{
+												$disabled = false;
+
+												if (isset($v['action']['init']['disabled']) && ($v['action']['init']['disabled'] == 1 || (string)$v['action']['init']['disabled'] == 'true'))
+													$disabled = true;
+
+												if ($disabled == false)
+												{
+													if (isset($v['action']['init']))
+														$stack['action']['init'] = $v['action']['init'];
+
+													$stack['action']['invoke'] = '';
+												}
+											}
+										}
+									}
+								}
+
+								if (isset($stack['controller']) || isset($stack['action']))
+									break;
 							}
+						}
+					}
 
-							if (isset($v['init']))
-								$this->_init('start', $v['init']);
+					if (!isset($stack['controller']))
+						$stack['controller']['invoke'] = $this->_namespace . $this->_route['controller']['translated'];
 
-							if (isset($v[$this->_route['controller']['raw']]))
-							{
-								if (isset($v[$this->_route['controller']['raw']]['init']))
-									$init = $v[$this->_route['controller']['raw']]['init'];
+					if (!isset($stack['action']))
+						$stack['action']['invoke'] = $this->_route['action']['translated'];
 
-								$invoked['controller'] = $this->_callController($this->_route, $init);
-							}
+					if (isset($stack['controller']['init']['start']))
+						$this->_init($stack['controller']['init']['start']);
 
-							if (isset($v['init']))
-								$this->_init('end', $v['init']);
+					$c = $stack['controller']['invoke'];
+
+					if (class_exists($c))
+					{
+						$c = new $c();
+						$m = $stack['action']['invoke'];
+						$a = $this->_route['params'];
+
+						if (isset($stack['action']['init']['start']))
+							$this->_init($stack['action']['init']['start']);
+
+						$j = method_exists($c, $m);
+						$i = is_callable(array($c, $m));
+						$n = method_exists($c, '__call');
+						$x = is_callable(array($c, '__call'));
+
+						if (($j && $i) || ($n && $x))
+						{
+							if (count($a) == 3)
+								$c->$m($a[0], $a[1], $a[2]);
+							else if (count($a) == 2)
+								$c->$m($a[0], $a[1]);
+							else if (count($a) == 1)
+								$c->$m($a[0]);
+							else if (count($a) == 0)
+								$c->$m();
+							else
+								call_user_func_array(array($c, $m), $a);
 						}
 
-						if (!isset($invoked['controller']))
-							$invoked['controller'] = $this->_callController($this->_route);
+						if (isset($stack['action']['init']['end']))
+							$this->_init($stack['action']['init']['end']);
 
-						if ($k == 'action')
+					} else {
+
+						echo 'error!';
+					}
+
+					if (isset($stack['controller']['init']['end']))
+						$this->_init($stack['controller']['init']['end']);
+
+					if (!empty($config))
+					{
+						if (isset($config['init']))
 						{
-							if (isset($v['view']))
+							$disabled = false;
+
+							if (isset($config['init']['disabled']) && $config['init']['disabled'] == 1 || (string)$config['init']['disabled'] == 'true')
+								$disabled = true;
+
+							if ($disabled == false)
 							{
-								if (isset($v['view']['::use']) && isset($v['view'][$v['view']['::use']]))
-								{
-									$view = array_merge_recursive($this->config->getView(), $v['view'][$v['view']['::use']]);
-								}
-								$this->config->setView($v['view']['::use'], $view);
+								if (isset($config['init']['end']))
+									$this->_init($config['init']['end']);
 							}
-
-							if (isset($v['init']))
-								$this->_init('start', $v['init']);
-
-							if (isset($v[$this->_route['action']['raw']]))
-							{
-								$invoked['action'] = true;
-
-								if (isset($v[$this->_route['action']['raw']]['init']))
-									$init = $v[$this->_route['action']['raw']]['init'];
-
-								if (isset($invoked['controller']))
-								{
-									$invoked['action'] = true;
-
-									$this->_callAction($invoked['controller'], $this->_route, $init);
-								}
-							}
-
-							if (isset($v['init']))
-								$this->_init('end', $v['init']);
 						}
-
-						if (!isset($invoked['action']))
-							$this->_callAction($invoked['controller'], $this->_route);
-
-						if ($k == 'init')
-							$this->_init('end', $v);
 					}
 				}
 			}
@@ -245,36 +325,80 @@
 			return $this;
 		}
 
-		private function _init($cursor, $config)
+		private function _init($config)
 		{
-			foreach ($config as $k => $v)
+			if (!empty($config))
 			{
-				if ($k == 'cmd')
-					$this->_cmd($v);
+				$disabled = false;
 
-				if ($k == $cursor)
+				if (isset($config['disabled']) && ($config['disabled'] == 1 || (string)$config['disabled'] == 'true'))
+					$disabled = true;
+
+				if ($disabled == false)
 				{
-					if (isset($v['::namespace']))
-						$this->config->setNamespace($v['::namespace']);
-
-					if (isset($v['cmd']))
-						$this->_cmd($v['cmd']);
-
-					if (isset($v['call']))
+					foreach ($config as $k => $v)
 					{
-						if (!isset($v['call']['disabled']) || ($v['call']['disabled'] == 0 || (string)$v['call']['disabled'] == 'false'))
+						if ($k == 'redirect' && !empty($v))
 						{
-							if (isset($v['call']['::namespace']))
-								$this->config->setNamespace($v['::namespace']);
+							header('Location: ' . $v);
 
-							$c = isset($v['call']['controller']) && !empty($v['call']['controller']) ? $v['call']['controller'] : 'index';
-							$a = isset($v['call']['action']) && !empty($v['call']['action']) ? $v['call']['action'] : 'index';
-							$p = isset($v['call']['params']) ? $v['call']['params'] : array();
-
-							$route = $this->_route($c, $a, $p);
-
-							$this->_callAction($this->_callController($this->_route($c, $a, $p)), $route);
+							exit;
 						}
+
+						if ($k == 'route' || $k == 'call')
+						{
+							$namespace = $this->_namespace;
+
+							if ($k == 'route' && !empty($v))
+							{
+								$route = $this->_route($v);
+
+								$c = $route['controller']['translated'];
+								$m = $route['action']['translated'];
+								$a = $route['params'];
+							}
+
+							if ($k == 'call')
+							{
+								$namespace = isset($v['namespace']) ? $v['namespace'] : $this->_namespace;
+
+								$c = isset($v['class']) && !empty($v['class']) ? $v['call'] : null;
+								$m = isset($v['method']) && !empty($v['method']) ? $v['method'] : null;
+								$a = isset($v['arguments']) && !empty($v['arguments']) ? $v['arguments'] : array();
+							}
+
+							if (!is_null($c))
+							{
+								$c = $namespace . $c;
+
+								if (class_exists($c))
+								{
+									$c = new $c();
+
+									$j = method_exists($c, $m);
+									$i = is_callable(array($c, $m));
+									$n = method_exists($c, '__call');
+									$x = is_callable(array($c, '__call'));
+
+									if (($j && $i) || ($n && $x))
+									{
+										if (count($a) == 3)
+											$c->$m($a[0], $a[1], $a[2]);
+										else if (count($a) == 2)
+											$c->$m($a[0], $a[1]);
+										else if (count($a) == 1)
+											$c->$m($a[0]);
+										else if (count($a) == 0)
+											$c->$m();
+										else
+											call_user_func_array(array($c, $m), $a);
+									}
+								}
+							}
+						}
+
+						if ($k == 'cmd')
+							$this->_cmd($v);
 					}
 				}
 			}
@@ -289,55 +413,7 @@
 				eval($v);
 		}
 
-		private function _callController($route, $init = array())
-		{
-			$c = $route['controller']['translated'];
-			$c = $this->config->getNamespace() . $c;
-
-			if (class_exists($c))
-			{
-				if (!empty($init))
-					$this->_init('start', $init);
-
-				$c = new $c();
-
-				if (!empty($init))
-					$this->_init('end', $init);
-			}
-
-			return $c;
-		}
-
-		private function _callAction($c, $route, $init = array())
-		{
-			$p = $route['params'];
-			$j = method_exists($c, $route['action']['translated']);
-			$i = is_callable(array($c, $route['action']['translated']));
-			$n = method_exists($c, '__call');
-			$x = is_callable(array($c, '__call'));
-
-			if (($j && $i) || ($n && $x))
-			{
-				if (!empty($init))
-					$this->_init('start', $init);
-
-				if (count($p) == 3)
-					$c->{$route['action']['translated']}($p[0], $p[1], $p[2]);
-				else if (count($p) == 2)
-					$c->{$route['action']['translated']}($p[0], $p[1]);
-				else if (count($p) == 1)
-					$c->{$route['action']['translated']}($p[0]);
-				else if (count($p) == 0)
-					$c->{$route['action']['translated']}();
-				else
-					call_user_func_array(array($c, $route['action']['translated']), $p);
-
-				if (!empty($init))
-					$this->_init('end', $init);
-			}
-		}
-
-		private function _route($controller, $action, $arguments)
+		private function _route($controller, $action = null, $arguments = array())
 		{
 			if (is_array($action))
 			{
@@ -345,13 +421,29 @@
 				$action    = 'index';
 			}
 
-			$route    = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
+			if (is_null($action) && empty($arguments))
+				$route = '/' . ltrim($controller, '/');
+			else
+				$route    = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
+
 			$_route   = explode('/', $route);
 			$params   = array_values(array_filter($_route));
 			$_project = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
 
 			if ($params[0] == $_project)
 				array_shift($params);
+
+			if (!empty($params) && JXP_App::exists($params[0]))
+			{
+				$config = JXP_Config::settings();
+
+				if (isset($config['detect-app-from-url']) && (string)$config['detect-app-from-url'] == true)
+				{
+					$this->app($params[0]);
+
+					array_shift($params);
+				}
+			}
 
 			if (!empty($params))
 			{

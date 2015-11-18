@@ -33,13 +33,19 @@
 					if (strpos($v, '.php') !== false)
 						$contents = file_get_contents($v);
 
-					self::$_config = array_merge(self::$_config, $contents);
+					if (is_array($contents))
+						self::$_config = array_merge(self::$_config, $contents);
 				}
 
 			} else {
 
-				self::$_config = array_merge(self::$_config, $config);
+				$config = json_decode($config, true);
+
+				if (is_array($config))
+					self::$_config = array_merge(self::$_config, $config);
 			}
+
+			return self::$_config;
 		}
 
 		public static function app($app)
@@ -56,7 +62,7 @@
 
 		public static function apps()
 		{
-			return self::$_config['apps'];
+			return isset(self::$_config['apps']) ? self::$_config['apps'] : array();
 		}
 
 		public static function setNamespace($ns)
@@ -69,14 +75,19 @@
 			return self::$_namespace == '\\' ? self::$_namespace : self::$_namespace . '\\';
 		}
 
-		public static function setView($view, $config)
+		public static function setView($view)
 		{
-			self::$_view[$view] = $config;
+			self::$_view = $view;
 		}
 
 		public static function getView()
 		{
 			return self::$_view;
+		}
+
+		public static function settings()
+		{
+			return isset(self::$_config['settings']) ? self::$_config['settings'] : array();
 		}
 
 		private static function _cleanCommentsFromJson($file)
