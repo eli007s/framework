@@ -61,11 +61,11 @@
 				$_request = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
 
 				if (is_null(JXP_App::loaded()))
-				{ echo 'app?';
-					$config = JXP_Config::get('apps');
+				{
+					$config = JXP_Config::getSettings();
 
-					if (isset($config['::default']))
-						$this->app($config['::default']);
+					if (isset($config['default-app']))
+						$this->app($config['default-app']);
 				}
 
 				$this->route($_SERVER['REQUEST_URI']);
@@ -435,7 +435,7 @@
 
 			if (!empty($params) && JXP_App::exists($params[0]))
 			{
-				$config = JXP_Config::settings();
+				$config = JXP_Config::getSettings();
 
 				if (isset($config['detect-app-from-url']) && (string)$config['detect-app-from-url'] == true)
 				{

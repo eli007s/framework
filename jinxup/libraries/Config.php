@@ -85,7 +85,7 @@
 			return self::$_view;
 		}
 
-		public static function settings()
+		public static function getSettings()
 		{
 			return isset(self::$_config['settings']) ? self::$_config['settings'] : array();
 		}
