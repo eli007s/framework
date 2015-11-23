@@ -45,7 +45,7 @@
 					self::$_config = array_merge(self::$_config, $config);
 			}
 
-			return self::$_config;
+			return self::_translate(self::$_config);
 		}
 
 		public static function app($app)
@@ -95,9 +95,25 @@
 			return preg_replace('@(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|((?<!:)//.*)|[\t\r\n]@i', '', file_get_contents($file));
 		}
 
-		private function _translate($config)
+		private static function _translate($config)
 		{
 
+			if (isset(self::$_config['apps']))
+			{
+				foreach (self::$_config['apps'] as $k => $v)
+				{
+					if (isset($v['import']))
+					{
+						if (isset(self::$_config['settings']['setting'][$v['import']]))
+						{
+							self::$_config['apps'][$k];
+						}
+					}
+				}
+			}
+
+
+			return $config;
 		}
 
 		private static function array_change_key_case_recursive($arr, $case = CASE_LOWER)
