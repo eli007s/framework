@@ -96,7 +96,7 @@
 			if (isset($config[$alias]))
 				extract($config[$alias]);
 
-			if (!is_null($_driver))
+			if (!is_null($driver))
 			{
 				switch (strtolower($driver))
 				{
