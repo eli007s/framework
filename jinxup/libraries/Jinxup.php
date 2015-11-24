@@ -351,6 +351,8 @@
 							unset(self::$_config['active']);
 						}
 
+						self::$_routes['params'] = array_values(array_filter(self::$_routes['params']));
+
 						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
 							$activeApp = array_shift(self::$_routes['params']);
 
