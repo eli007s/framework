@@ -345,7 +345,7 @@
 												try
 												{
 													ob_start();
-
+$log['bt'] = debug_backtrace();
 													echo '<pre>' . print_r($log, true) . '</pre>';
 
 													$body = ob_get_contents();
