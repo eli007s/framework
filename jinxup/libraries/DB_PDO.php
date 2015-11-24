@@ -153,7 +153,7 @@
 
 			if (!empty($this->_con))
 			{
-				$this->_con->beginTransaction();
+				//$this->_con->beginTransaction();
 
 				try
 				{
@@ -274,7 +274,7 @@
 
 					$this->_errorLog($this->_log[$hash]['error']);
 
-					$this->_con->rollBack();
+					//$this->_con->rollBack();
 				}
 
 			}  else {
