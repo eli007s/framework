@@ -185,7 +185,7 @@
 					
 						$endTime = microtime(true);
 
-						$this->_con->commit();
+						//$this->_con->commit();
 
 					} else {
 
