@@ -198,6 +198,7 @@
 					$debug   = debug_backtrace();
 
 					$this->_log[$hash]['error'] = array(
+						'time'    => $endTime - $starTime,
 						'file'    => $debug[2]['file'],
 						'line'    => $debug[2]['line'],
 						'message' => $e->getMessage()
