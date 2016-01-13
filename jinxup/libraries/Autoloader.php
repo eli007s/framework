@@ -20,9 +20,7 @@
 				if ($rawArray[0] == 'JXP')
 				{
 					$pathToFile = __DIR__;
-					$fileNames  = array(
-						ucfirst($rawArray[1])
-					);
+					$fileNames  = array(ucfirst($rawArray[1]));
 
 				} else {
 
@@ -33,14 +31,14 @@
 						$rawArray[0] = end($ns);
 					}
 
-					$pathToFile = self::$_path;
+					$pathToFile = self::$_path . (isset($rawArray[1]) ? DS . strtolower($rawArray[1] . 's') : null);
 
 					if ($rawArray[0] !== 'Jinxup')
 					{
 						$fileNames  = array(
-								$rawArray[0],
-								strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),
-								$rawArray[0] . '_' . strtolower($rawArray[1])
+							$rawArray[0],
+							strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),
+							$rawArray[0] . '_' . strtolower($rawArray[1])
 						);
 
 					} else {
