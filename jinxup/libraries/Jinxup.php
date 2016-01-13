@@ -65,7 +65,18 @@
 					$config = JXP_Config::getSettings();
 
 					if (isset($config['default-app']))
+					{
 						$this->app($config['default-app']);
+
+					} else {
+
+						$apps = JXP_Directory::scan(getcwd() . DS . 'apps');
+
+						if (count($apps) == 1)
+							$this->app($apps[0]['name']);
+						else
+							throw new exception ('no default app detected');
+					}
 				}
 
 				$this->route($_SERVER['REQUEST_URI']);

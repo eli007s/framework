@@ -28,29 +28,29 @@
 
 							if ($match === true)
 							{
-								$_arr = array(
-										'name' => $dir->getBasename(),
-										'ext'  => $dir->getExtension(),
-										'path' => $dir->getPathname()
-								);
+								$_arr['name'] = $dir->getBasename();
+								$_arr['path'] = $dir->getPathname();
 
-								if (is_file($dir->getPathname()))
-									$_arr += array('size' => filesize($dir->getPathname()));
-
-								if (preg_match('(jpeg|jpg|png|gif)', $_arr['ext']))
+								if ($dir->isFile())
 								{
-									$info = getimagesize($dir->getPathname());
+									$_arr['ext']  = $dir->getExtension();
+									$_arr['size'] = filesize($dir->getPathname());
 
-									$_arr += array(
+									if (preg_match('(jpeg|jpg|png|gif)', $_arr['ext']))
+									{
+										$info = getimagesize($dir->getPathname());
+
+										$_arr += array(
 											'width'  => $info[0],
 											'height' => $info[1]
-									);
+										);
+									}
 								}
 
 								$directories[] = $_arr;
 							}
 						}
-						}
+					}
 				}
 			}
 
