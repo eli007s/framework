@@ -40,10 +40,8 @@
 									{
 										$info = getimagesize($dir->getPathname());
 
-										$_arr += array(
-											'width'  => $info[0],
-											'height' => $info[1]
-										);
+										$_arr['width']  = $info[0];
+										$_arr['height'] = $info[1];
 									}
 								}
 

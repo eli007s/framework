@@ -72,9 +72,13 @@
 
 						$apps = JXP_Directory::scan(getcwd() . DS . 'apps');
 
+						if (count($apps) == 0)
+							throw new exception ('no apps detected');
+
 						if (count($apps) == 1)
 							$this->app($apps[0]['name']);
-						else
+
+						if (count($apps) > 1)
 							throw new exception ('no default app detected');
 					}
 				}
