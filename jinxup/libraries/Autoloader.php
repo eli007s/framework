@@ -31,10 +31,24 @@
 						$rawArray[0] = end($ns);
 					}
 
-					$pathToFile = self::$_path . (isset($rawArray[1]) ? DS . strtolower($rawArray[1] . 's') : null);
+					if (in_array(strtolower(end($rawArray)), ['controller', 'helper', 'model', 'view'])) {
+
+                        $pathToFile = self::$_path . DS . strtolower(end($rawArray)) . 's';
+                    }
 
 					if ($rawArray[0] !== 'Jinxup')
 					{
+					    if (count($rawArray) >= 3) {
+
+					        $endOfArray = $rawArray[count($rawArray) - 1];
+
+                            unset($rawArray[count($rawArray) - 1]);
+
+                            $rawArray[0] = implode('_', $rawArray);
+
+                            $rawArray[1] = $endOfArray;
+                        }
+
 						$fileNames  = array(
 							$rawArray[0],
 							strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),

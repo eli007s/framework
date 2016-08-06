@@ -99,6 +99,26 @@
 			}
 		}
 
+		public function root($root = '') {
+
+		    $_route = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
+
+            if (count($_route) > 0) {
+
+                $_first  = $_route[0];
+                $_second = trim($root, '/');
+
+                if ($_first == $_second) {
+
+                    unset($_route[0]);
+
+                    $_SERVER['REQUEST_URI'] = count($_route) > 0 ? implode('/', $_route) : '/';
+                }
+            }
+
+            return $this;
+        }
+
 		/**
 		 * @param $app string
 		 * @throws exception
@@ -127,10 +147,14 @@
 		 */
 		public function route($route)
 		{
-			if (!is_null(JXP_App::loaded()))
-				$this->_route = array('string' => $route);
-			else
-				throw new exception ('no app loaded');
+			if (!is_null(JXP_App::loaded())) {
+
+                $this->_route = array('string' => $route);
+
+            } else {
+
+                throw new exception ('no app loaded');
+            }
 
 			return $this;
 		}
@@ -270,7 +294,7 @@
 					if (isset($stack['controller']['init']['start']))
 						$this->_init($stack['controller']['init']['start']);
 
-					$c = $stack['controller']['invoke'];
+					$c = str_replace('\\\\', '\\', $stack['controller']['invoke']);
 
 					if (class_exists($c))
 					{
@@ -305,7 +329,7 @@
 
 					} else {
 
-						echo 'error!';
+						echo '404 error, class ' . $c . ' does not exist.';
 					}
 
 					if (isset($stack['controller']['init']['end']))
