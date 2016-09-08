@@ -20,7 +20,12 @@
 				if ($rawArray[0] == 'JXP')
 				{
 					$pathToFile = __DIR__;
-					$fileNames  = array(ucfirst($rawArray[1]));
+
+                    array_shift($rawArray);
+
+                    $rawArray[0] = ucfirst($rawArray[0]);
+
+					$fileNames  = array(implode('_', $rawArray));
 
 				} else {
 
