@@ -16,11 +16,10 @@
 			{
 				$rawArray           = explode('_', $class);
 				$foundClassFilename = null;
+                $pathToFile = __DIR__;
 
-				if ($rawArray[0] == 'JXP')
-				{
-					$pathToFile = __DIR__;
-
+                if ($rawArray[0] == 'JXP')
+                {
                     array_shift($rawArray);
 
                     $rawArray[0] = ucfirst($rawArray[0]);
@@ -43,22 +42,20 @@
 
 					if ($rawArray[0] !== 'Jinxup')
 					{
-					    if (count($rawArray) >= 3) {
+                        $fileNames[] = $rawArray[0];
+
+					    if (count($rawArray) > 0) {
 
 					        $endOfArray = $rawArray[count($rawArray) - 1];
 
                             unset($rawArray[count($rawArray) - 1]);
 
                             $rawArray[0] = implode('_', $rawArray);
-
                             $rawArray[1] = $endOfArray;
-                        }
 
-						$fileNames  = array(
-							$rawArray[0],
-							strtolower($rawArray[1][0]) . ucfirst($rawArray[0]),
-							$rawArray[0] . '_' . strtolower($rawArray[1])
-						);
+                            $fileNames[] = strtolower($rawArray[1][0]) . ucfirst($rawArray[0]);
+                            $fileNames[] = $rawArray[0] . '_' . strtolower($rawArray[1]);
+                        }
 
 					} else {
 

@@ -32,10 +32,15 @@
 			register_shutdown_function('JXP_Error::shutdown');
 		}
 
-		public static function showErrors($bool = true)
+		public static function show($bool = true)
 		{
 			self::$_showErrors = $bool;
 		}
+
+        public static function hide($bool = false)
+        {
+            self::$_showErrors = $bool;
+        }
 
 		public static function shutdown()
 		{
@@ -72,6 +77,13 @@
 				'var' => $vars*/
 			);
 
-			echo '<pre>', print_r(self::$_error, true), '</pre>';
-		}
+            if (self::$_showErrors == true) {
+
+                ini_set('display_errors', 1);
+                ini_set('display_startup_errors', 1);
+                error_reporting(E_ALL);
+
+                echo '<pre>', print_r(self::$_error, true), '</pre>';
+            }
+        }
 	}

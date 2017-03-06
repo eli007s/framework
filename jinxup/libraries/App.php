@@ -2,13 +2,24 @@
 
 	class JXP_App
 	{
-		private static $_app  = null;
-		private static $_apps = array();
+		private static $_app    = null;
+		private static $_apps   = array();
+        private static $_routes = [];
 
 		public static function set($app)
 		{
 			self::$_app = $app;
 		}
+
+		public static function setRoutes($c, $m, $a) {
+
+		    self::$_routes = ['controller' => $c, 'action' => $m, 'params' => $a];
+        }
+
+        public static function getRoutes() {
+
+            return self::$_routes;
+        }
 
 		public static function loaded()
 		{

@@ -29,6 +29,8 @@
 
 		$jinxup = new Jinxup();
 
+        $jinxup->init();
+
 	} else {
 
 		$margin = 0;

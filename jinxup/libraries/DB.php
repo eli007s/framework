@@ -1,6 +1,6 @@
 <?php
 
-	class JXP_DB
+	class JXP_DB extends JXP_Config
 	{
 		/**
 		 * @var array
@@ -78,10 +78,11 @@
 		/**
 		 * @param string $alias
 		 * @param array $fuel
+         * @return object
 		 */
 		public static function ignite($alias = null, $fuel = [])
 		{
-			$config  = !empty($fuel) ? array($alias => $fuel) : [];
+			$config  = !empty($fuel) ? array($alias => $fuel) : [$alias => self::get('database')];
 			$host    = '';
 			$name    = '';
 			$user    = '';
@@ -92,7 +93,7 @@
 			$driver  = 'PDO';
 			$_alias  = null;
 			$_driver = null;
-
+echo '<pre>', print_r($config, true), '</pre>';
 			if (isset($config[$alias]))
 				extract($config[$alias]);
 
@@ -217,6 +218,13 @@
 			return $return;
 		}
 
+		public function __get($name) {
+
+		    self::$_alias = $name;
+
+		    return self::$name();
+        }
+
 		/**
 		 * @param string $alias
 		 * @param array $params
@@ -233,14 +241,13 @@
 
 			} else {
 
-				// TODO: get the default query for the application or controller/action
 				if ($alias == 'query')
 				{
 					self::$_alias = 'default';
-
-					if (!isset(self::$_database['default']))
-						self::ignite('default');
 				}
+
+                if (!isset(self::$_database[self::$_alias]))
+                    self::ignite(self::$_alias);
 
 				$dbObj = self::$_database[self::$_alias];
 
