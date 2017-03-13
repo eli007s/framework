@@ -10,26 +10,43 @@
 
 			if (is_dir($path))
 			{
-				foreach (new DirectoryIterator($path . '/') as $directory)
+				foreach (new DirectoryIterator($path . '/') as $dir)
 				{
-					$match = true;
-
-					if (($directory->isDir() && !$directory->isDot()) || $directory->isFile())
+					if (($dir->isDir() && !$dir->isDot()) || $dir->isFile())
 					{
-						$base  = $directory->getBasename();
+						$match = true;
 
-						if (!preg_match('/' . self::$_excludePattern . '/im', $base))
+						if (!preg_match('/' . self::$_excludePattern . '/im', $dir->getBasename()))
 						{
 							if (!is_null($pattern))
 							{
 								$match = false;
 
-								if (preg_match('/' . $pattern . '/i', $base))
+								if (preg_match('/' . $pattern . '/i', $dir->getBasename()))
 									$match = true;
 							}
 
 							if ($match === true)
-								$directories[$directory->getBasename()] = $directory->getPathname();
+							{
+								$_arr['name'] = $dir->getBasename();
+								$_arr['path'] = $dir->getPathname();
+
+								if ($dir->isFile())
+								{
+									$_arr['ext']  = $dir->getExtension();
+									$_arr['size'] = filesize($dir->getPathname());
+
+									if (preg_match('(jpeg|jpg|png|gif)', $_arr['ext']))
+									{
+										$info = getimagesize($dir->getPathname());
+
+										$_arr['width']  = $info[0];
+										$_arr['height'] = $info[1];
+									}
+								}
+
+								$directories[] = $_arr;
+							}
 						}
 					}
 				}

@@ -3,8 +3,8 @@
 	class JXP_Error
 	{
 		private static $_error      = array();
-		private static $_logTypes   = E_ALL;
-		private static $_showErrors = false;
+		private static $_logType    = E_ALL;
+		private static $_showErrors = true;
 		private static $errorType   = array (
 			E_ERROR             => 'Error',
 			E_WARNING           => 'Warning',
@@ -26,16 +26,21 @@
 		{
 			error_reporting(0);
 
-			self::$_logTypes = $logTypes;
+			self::$_logType = $logTypes;
 
-			set_error_handler('JXP_Error::log', self::$_logTypes);
+			set_error_handler('JXP_Error::log', self::$_logType);
 			register_shutdown_function('JXP_Error::shutdown');
 		}
 
-		public static function showErrors($bool = true)
+		public static function show($bool = true)
 		{
 			self::$_showErrors = $bool;
 		}
+
+        public static function hide($bool = false)
+        {
+            self::$_showErrors = $bool;
+        }
 
 		public static function shutdown()
 		{
@@ -49,12 +54,12 @@
 				self::$_error['server']   = array_chunk($_SERVER, 9, true);
 				self::$_error['sessions'] = $_SESSION;
 				self::$_error['cookies']  = $_COOKIE;
-				self::$_error['vars']     = JXP_View::getTemplateVars();
-				self::$_error['queries']  = JXP_DB::log();
+				//self::$_error['vars']     = JXP_View::getTemplateVars();
+				//self::$_error['queries']  = JXP_DB::log();
 
-				JXP_View::setPath('views', Jinxup::installPath() . DS . 'views');
-				JXP_View::set('debug', self::$_error);
-				JXP_View::render('debug.tpl');
+				//JXP_View::setPath('views', Jinxup::installPath() . DS . 'views');
+				//JXP_View::set('debug', self::$_error);
+				//JXP_View::render('debug.tpl');
 			}
 		}
 
@@ -68,10 +73,17 @@
 				'script' => array(
 					'name' => $fileName,
 					'line' => $lineNum
-				),
-				'var' => $vars
+				)/*,
+				'var' => $vars*/
 			);
 
-			//echo '<pre>', print_r(self::$_error, true), '</pre>';
-		}
+            if (self::$_showErrors == true) {
+
+                ini_set('display_errors', 1);
+                ini_set('display_startup_errors', 1);
+                error_reporting(E_ALL);
+
+                echo '<pre>', print_r(self::$_error, true), '</pre>';
+            }
+        }
 	}

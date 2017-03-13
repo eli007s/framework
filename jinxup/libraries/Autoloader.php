@@ -1,116 +1,81 @@
 <?php
 
-	class JXP_Autoloader
+	class JXP_Autoloader extends Jinxup
 	{
-		private static $_init  = null;
-		private static $_path  = null;
-		private static $_alias = null;
-		public static $loaded  = array();
+		private static $_path     = null;
+		private static $_registry = array();
 
-		private static function _init()
-		{
-			if (is_null(self::$_init))
-				self::$_init = new self();
-
-			return self::$_init;
-		}
-
-		public static function peekIn($path, $alias = null)
+		public static function register($path)
 		{
 			self::$_path = $path;
-
-			if (!is_null($alias))
-				self::$_alias = $alias;
-
-			return self::_init();
 		}
 
 		public static function autoload($class)
 		{
-			$file = null;
-
-			if (strpos($class, 'JXP_') !== false)
+			if (!in_array($class, self::$_registry))
 			{
-				$class = str_replace('JXP_', '', $class) . '.php';
-				$file  = __DIR__ . DS . $class;
+				$rawArray           = explode('_', $class);
+				$foundClassFilename = null;
+                $pathToFile = __DIR__;
 
-			} else {
+                if ($rawArray[0] == 'JXP')
+                {
+                    array_shift($rawArray);
 
-				if (strpos($class, '\\') !== false)
-				{
-					$namespace = explode('\\', $class);
-					$_class[0] = array_pop($namespace);
-					$path      = implode('\\', $namespace);
+                    $rawArray[0] = ucfirst($rawArray[0]);
+
+					$fileNames  = array(implode('_', $rawArray));
 
 				} else {
 
-					if ($class == 'bootstrap')
+					if (strpos($rawArray[0], '\\') !== false)
 					{
-						$_class[0] = $class;
-						$_class[1] = 'controller';
+						$ns = explode('\\', $rawArray[0]);
+
+						$rawArray[0] = end($ns);
+					}
+
+					if (in_array(strtolower(end($rawArray)), ['controller', 'helper', 'model', 'view'])) {
+
+                        $pathToFile = self::$_path . DS . strtolower(end($rawArray)) . 's';
+                    }
+
+					if ($rawArray[0] !== 'Jinxup')
+					{
+                        $fileNames[] = $rawArray[0];
+
+					    if (count($rawArray) > 0) {
+
+					        $endOfArray = $rawArray[count($rawArray) - 1];
+
+                            unset($rawArray[count($rawArray) - 1]);
+
+                            $rawArray[0] = implode('_', $rawArray);
+                            $rawArray[1] = $endOfArray;
+
+                            $fileNames[] = strtolower($rawArray[1][0]) . ucfirst($rawArray[0]);
+                            $fileNames[] = $rawArray[0] . '_' . strtolower($rawArray[1]);
+                        }
 
 					} else {
 
-						$_class = explode('_', $class);
-
-						if (count($_class) > 2)
-						{
-							$_type = array_pop($_class);
-
-							$_class[0] = implode('_', $_class);
-							$_class[1] = $_type;
-						}
+						$fileNames = array();
 					}
-
-					$path = isset($_class[1]) ? self::$_path . DS . strtolower($_class[1]) . 's' : __DIR__;
 				}
 
-				if (isset($_class))
-					$file = self::search($class, $_class, $path);
-			}
-
-			if (!is_null($file) && file_exists($file))
-			{
-				self::$loaded[] = $file;
-
-				if (!is_null(self::$_alias))
-					eval('namespace jinxup\\' . self::$_alias . ';');
-
-				require_once($file);
-
-			} else {
-
-				// TODO: load error template for missing file
-				// error out silently or halt app execution
-				//echo 'missing file to autoload: ' . $file;
-			}
-		}
-
-		private static function search($class, $_class, $path)
-		{
-			$foundClassFilename = null;
-			$potentialFileNames = [$_class[0], $class];
-
-			if (isset($_class[1]))
-				$potentialFileNames[] = $_class[1][0] . $_class[0];
-
-			if (is_dir($path))
-			{
-				foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $dir)
+				if (is_dir($pathToFile) && !empty($fileNames))
 				{
-					if ($dir->isFile())
+					foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pathToFile)) as $dir)
 					{
-						preg_match('#(' . str_replace('\\', '\\\\', $_class[0]) . ')#i', $dir->getBasename(), $match);
-
-						$match = array_filter($match);
-
-						if (!empty($match))
+						if ($dir->isFile())
 						{
-							foreach ($potentialFileNames as $fileName)
+							foreach ($fileNames as $fileName)
 							{
 								if (strtolower($fileName . '.php') == strtolower($dir->getBasename()))
 								{
-									$foundClassFilename = $dir->getPathname();
+									self::$_registry[] = $class;
+
+									require_once $dir->getPathname();
 
 									break;
 								}
@@ -119,7 +84,5 @@
 					}
 				}
 			}
-
-			return $foundClassFilename;
 		}
 	}

@@ -4,7 +4,7 @@
 	{
 		private static $_letters = [
 			'const' => [
-				'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'z', 'th', 'st'
+				'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'w', 'z', 'th', 'st', 'ch', 'rd'
 			],
 			'vowel' =>	[
 				'a', 'e', 'i', 'o', 'u', 'y', 'ee', 'ie', 'oo', 'ou'
@@ -31,14 +31,22 @@
 			return substr(strtoupper($const[self::number(0, count($const) - 1)]), 0, 1);
 		}
 
-		public static function string($length = 8)
+		public static function string($length = 8, $noSpecial = false)
 		{
-			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=!@#$%';
+			$chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+            if ($noSpecial == false) {
+
+                $chars .= '=!@#$%-';
+            }
+
 			$str   = null;
 			$max   = strlen($chars) - 1;
 
-			for ($i = 0; $i < $length; $i++)
-				$str .= $chars[self::number(0, $max)];
+			for ($i = 0; $i < $length; $i++) {
+
+                $str .= $chars[self::number(0, $max)];
+            }
 
 			return str_replace(' ', '', $str);
 		}

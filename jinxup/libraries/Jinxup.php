@@ -1,250 +1,563 @@
 <?php
 
-	class Jinxup
-	{
-		private static $_app;
-		private static $_config;
-		private static $_exit       = false;
-		private static $_init       = null;
-		private static $_apps       = array();
-		private static $_loadedApps = array();
-		private static $_thisPath   = null;
-		private static $_version    = '1.0b';
-		private static $_appFlag    = '';
-		private static $_namespace  = null;
-		private static $_routes     = array('controller' => array('translated' => 'Index', 'raw' => 'Index_Controller'), 'action' => array('translated' => 'index', 'raw' => 'indexAction'));
+    class Jinxup {
 
-		public function __construct()
-		{
-			if (!defined('DS'))
-				define('DS', DIRECTORY_SEPARATOR);
+        private $_route     = [];
+        private $_registry  = [];
+        private $_namespace = '\\';
+        private $_routed    = false;
 
-			self::$_thisPath = dirname(__DIR__);
+        public function __construct() {}
 
-			self::_autoload();
+        public function __toString() {
 
-			JXP_Error::register(E_ALL);
-		}
+            return file_get_contents(__DIR__ . DS . '..' . DS . 'templates' . DS . 'toString.php');
+        }
 
-		public function __toString()
-		{
-			return self::$_version;
-		}
+        public function __get($name) {
 
-		public function __get($name)
-		{
-			$class   = 'JXP_' . $name;
-			$calling = new $class();
+            $return = null;
+            $class  = 'JXP_' . $name;
 
-			if (method_exists($calling, 'init'))
-				return $calling->init();
-		}
+            if (class_exists($class))  {
 
-		public function init()
-		{
-			if (is_null(self::$_init))
-			{
-				self::_parseFrameworkConfig();
-				self::_parseGlobalConfig();
-				self::_sessions();
-				self::_prepareURI();
-				self::_findApplications();
-				self::_setApplication();
-				self::_runRoutes();
+                if (!array_key_exists($class, $this->_registry)) {
 
-				self::$_init = 'loaded';
-			}
-		}
+                    $this->_registry[$class] = new $class;
+                }
 
-		public static function load($app)
-		{
-			if (!in_array($app, self::$_loadedApps))
-			{
-				if (array_key_exists($app, self::$_apps))
-				{
-					JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $app, $app);
+                $return = $this->_registry[$class];
 
-					spl_autoload_unregister(array('JXP_Autoloader', 'autoload'));
+            } else {
 
-					self::$_appFlag   = 'loading';
-					self::$_namespace = $app;
+                throw new exception ($name . ' method doesn\'t exist');
+            }
 
-					self::_autoload();
-					self::_prepareURI();
-					self::_setApplication($app);
-					self::_runRoutes();
+            return $return;
+        }
 
-				} else {
+        public function init() {
 
-					self::_exitWith('application');
-				}
-			}
+            $autoloaderPath = __DIR__ . DS . 'Autoloader.php';
 
-			self::_stop();
-		}
+            if (file_exists($autoloaderPath)) {
 
-		private static function _stop()
-		{
-			// TODO: stop logic
-			exit;
-		}
+                require_once($autoloaderPath);
 
-		public static function installPath()
-		{
-			return self::$_thisPath;
-		}
+                if (function_exists('__autoload')) {
 
-		public static function path($dir)
-		{
-			$path = JXP_Directory::scan(dirname(__DIR__));
+                    spl_autoload_register('__autoload');
+                }
 
-			return is_dir($path[$dir]) ? $path[$dir] : null;
-		}
+                spl_autoload_register(['JXP_Autoloader', 'autoload']);
+            }
 
-		public static function getApp()
-		{
-			return self::$_app;
-		}
+            $this->error->register();
+            $this->config->load(__DIR__ . DS . '..' . DS . '..' . DS . 'config' . DS . 'global.json');
 
-		private static function _autoload()
-		{
-			$autoloaderPath = __DIR__ . DS . 'Autoloader.php';
+            $cwd = explode('/', getcwd());
 
-			if (!file_exists($autoloaderPath))
-			{
-				// TODO: load error template
-				exit('Missing autoloader');
-			}
+            if ($cwd[count($cwd) - 2] == 'apps') {
 
-			require_once($autoloaderPath);
+                $app = $cwd[count($cwd) - 1];
 
-			JXP_Autoloader::peekIn(__DIR__);
+                $this->app($app);
+                $this->config->load(__DIR__ . DS . '..' . DS . '..' . DS . 'config' . DS . 'config.' . $app . '.json');
 
-			if (function_exists('__autoload'))
-				spl_autoload_register('__autoload');
+            } else {
 
-			spl_autoload_register(array('JXP_Autoloader', 'autoload'));
-		}
+                $this->app->discover();
+            }
+        }
 
-		private static function _parseFrameworkConfig()
-		{
-			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(dirname(__DIR__) . DS . 'config'));
-		}
+        public function ns($ns = '//') {
 
-		private static function _parseGlobalConfig()
-		{
-			self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(getcwd() . DS . 'config'));
-		}
+            $this->_namespace = $ns;
+        }
 
-		private static function _sessions()
-		{
-			$ip = JXP_Tracker::getIP();
+        public function run() {
 
-			if (isset(self::$_config['session']) && ($ip != '127.0.0.1' || $ip != '::1'))
-			{
-				$cfgSess = self::$_config['session'];
-				$use     = isset($cfgSess['use']) ? $cfgSess['use'] : 'redis';
-				$handler = null;
+            if (!$this->_routed) {
 
-				if ($use == 'redis')
-				{
-					if (isset($cfgSess[$use]['host']))
+                $_temp    = explode('?', $_SERVER['REQUEST_URI']);
+                $_request = array_values(array_filter(explode('/', $_temp[0])));
+
+                if (is_null($this->app->loaded())) {
+
+                    $config = $this->config->getSettings();
+
+                    if (isset($config['default-app'])) {
+
+                        $this->app($config['default-app']);
+
+                    } else {
+
+                        $cwd = explode('/', getcwd());
+
+                        if ($cwd[count($cwd) - 2] == 'apps') {
+
+                            $apps[] = ['name' => $cwd[count($cwd) - 1]];
+
+                        } else {
+
+                            $apps = $this->directory->scan(getcwd() . DS . 'apps');
+                        }
+
+                        if (count($apps) == 0) {
+
+                            throw new exception ('no apps detected');
+                        }
+
+                        if (count($apps) == 1) {
+
+                            $this->app($apps[0]['name']);
+                            //$this->config->load(__DIR__ . DS . '..' . DS . '..' . DS . 'config' . DS . 'config.' . $apps[0]['name'] . '.json');
+                        }
+
+                        if (count($apps) > 1) {
+
+                            throw new exception ('no default app detected');
+                        }
+                    }
+                }
+
+                $this->route($_SERVER['REQUEST_URI']);
+
+                if (count($_request) == 0) {
+
+                    $this->to('index', 'index');
+                }
+
+                if (count($_request) == 1) {
+
+                    $this->to($_request[0] == '/' ? 'index' : $_request[0], 'index');
+                }
+
+                if (count($_request) == 2) {
+
+                    $this->to($_request[0], $_request[1]);
+                }
+
+                if (count($_request) >= 3) {
+
+                    $this->to(array_shift($_request), array_shift($_request), $_request);
+                }
+            }
+        }
+
+        public function root($root = '') {
+
+            $_route = array_values(array_filter(explode('/', $_SERVER['REQUEST_URI'])));
+
+            if (count($_route) > 0) {
+
+                $_first  = $_route[0];
+                $_second = trim($root, '/');
+
+                if ($_first == $_second) {
+
+                    unset($_route[0]);
+
+                    $_SERVER['REQUEST_URI'] = count($_route) > 0 ? implode('/', $_route) : '/';
+                }
+            }
+
+            return $this;
+        }
+
+        /**
+         * @param $app string
+         * @throws exception
+         * @return object
+         */
+        public function app($app) {
+
+            if (is_dir(__DIR__ . DS . '..' . DS . '..' . DS . 'apps' . DS . $app)) {
+
+                $this->app->set($app);
+                $this->autoloader->register(__DIR__ . DS . '..' . DS . '..' . DS . 'apps' . DS . $app);
+
+            } else {
+
+                throw new exception ('app does not exist');
+            }
+
+            return $this;
+        }
+
+        /**
+         * @param $route string
+         * @throws exception
+         * @return object
+         */
+        public function route($route) {
+
+            if (!is_null($this->app->loaded())) {
+
+                $this->_route = array('string' => $route);
+
+            } else {
+
+                throw new exception ('no app loaded');
+            }
+
+            return $this;
+        }
+
+        /**
+         * @param $controller string
+         * @param $action string|array
+         * @param $arguments array
+         * @throws exception
+         * @return object
+         */
+        public function to($controller = 'index', $action = 'index', $arguments = []) {
+
+            if ($this->_routed === false && isset($this->_route['string'])) {
+
+                $controller = strtolower($controller);
+
+                if (strpos($this->_route['string'], '*') !== false) {
+
+                    if (preg_match('#(' . str_replace('*', '.*', $this->_route['string']) . ')#i', $_SERVER['REQUEST_URI'])) {
+
+                        $this->_routed = true;
+                    }
+
+                } else {
+
+                    if ($this->_route['string'] == $_SERVER['REQUEST_URI']) {
+
+                        $this->_routed = true;
+                    }
+                }
+
+                if ($this->_routed === true) {
+
+                    $this->_route += $this->_route($controller, $action, $arguments);
+
+                    $this->app->setRoutes($controller, $action, $arguments);
+
+                    $stack  = [];
+                    //$config = $this->config->load(__DIR__ . DS . '..' . DS . '..' . DS . 'config');
+                    $config = isset($config['apps'][$this->app->loaded()]) ? $config['apps'][$this->app->loaded()] : [];
+
+                    if (!empty($config)) {
+
+                        if (isset($config['namespace']) && !empty($config['namespace'])) {
+
+                            $this->_namespace = $config['namespace'];
+                        }
+
+                        if (isset($config['view'])) {
+
+                            JXP_Config::setView($config['view']);
+                        }
+
+                        if (isset($config['init'])) {
+
+                            if (isset($config['init']['start'])) {
+
+                                $this->_run($config['init']['start']);
+                            }
+                        }
+
+                        if (isset($config['invoked'])) {
+
+                            foreach ($config['invoked'] as $k => $v) {
+
+                                if (isset($v['controller'])) {
+
+                                    if (isset($v['controller']['name'])) {
+
+                                        if ($this->_route['controller']['raw'] == $v['controller']['name'] || $this->_route['controller']['translated'] == $v['controller']['name']) {
+
+                                            if (isset($v['controller']['view'])) {
+
+                                                $this->config->setView($v['controller']['view']);
+                                            }
+
+                                            $namespace = isset($v['controller']['namespace']) && !empty($v['controller']['namespace']) ? $v['controller']['namespace'] : $this->_namespace;
+
+                                            if (isset($v['controller']['init'])) {
+
+                                                $disabled = false;
+
+                                                if (isset($v['controller']['init']['disabled']) && ($v['controller']['init']['disabled'] == 1 || (string)$v['controller']['init']['disabled'] == 'true')) {
+
+                                                    $disabled = true;
+                                                }
+
+                                                if ($disabled == false) {
+
+                                                    if (isset($v['controller']['init'])) {
+
+                                                        $stack['controller']['init'] = $v['controller']['init'];
+                                                    }
+
+                                                    $stack['controller']['invoke'] = $namespace . '\\' . $this->_route['controller']['translated'];
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+								if (isset($v['action']))
+								{
+									if (isset($v['action']['name']))
+									{
+										if ($this->_route['action']['raw'] == $v['action']['name'] || $this->_route['action']['translated'] == $v['action']['name'])
+										{
+											if (isset($v['action']['view']))
+												JXP_Config::setView($v['action']['view']);
+
+											if (isset($v['action']['init']))
+											{
+												$disabled = false;
+
+												if (isset($v['action']['init']['disabled']) && ($v['action']['init']['disabled'] == 1 || (string)$v['action']['init']['disabled'] == 'true'))
+													$disabled = true;
+
+												if ($disabled == false)
+												{
+													if (isset($v['action']['init']))
+														$stack['action']['init'] = $v['action']['init'];
+
+													$stack['action']['invoke'] = '';
+												}
+											}
+										}
+									}
+								}
+
+								if (isset($stack['controller']) || isset($stack['action']))
+									break;
+							}
+						}
+					}
+
+					if (!isset($stack['controller']))
+						$stack['controller']['invoke'] = rtrim($this->_namespace, '\\') . '\\' . $this->_route['controller']['translated'];
+
+					if (!isset($stack['action']))
+						$stack['action']['invoke'] = $this->_route['action']['translated'];
+
+					if (isset($stack['controller']['init']['start']))
+						$this->_run($stack['controller']['init']['start']);
+
+					$c = str_replace('\\\\', '\\', $stack['controller']['invoke']);
+
+					if (class_exists($c))
 					{
-						require_once 'vendors' . DS . 'predis' . DS . 'Autoloader.php';
+						$c = new $c();
+						$m = $stack['action']['invoke'];
+						$a = $this->_route['params'];
 
-						Predis\Autoloader::register();
+						if (isset($stack['action']['init']['start']))
+							$this->_run($stack['action']['init']['start']);
 
-						$ttl  = isset($cfgSess[$use]['ttl']) ? $cfgSess[$use]['ttl'] : 3600;
-						$port = isset($cfgSess[$use]['port']) ? $cfgSess[$use]['port'] : 6973;
+						$j = method_exists($c, $m);
+						$i = is_callable(array($c, $m));
+						$n = method_exists($c, '__call');
+						$x = is_callable(array($c, '__call'));
 
-						$client = new Predis\Client(array(
-							'scheme' => 'tcp',
-							'host'   => $cfgSess[$use]['host'],
-							'port'   => $port
-						));
+						if (($j && $i) || ($n && $x))
+						{
+							if (count($a) == 3)
+								$c->$m($a[0], $a[1], $a[2]);
+							else if (count($a) == 2)
+								$c->$m($a[0], $a[1]);
+							else if (count($a) == 1)
+								$c->$m($a[0]);
+							else if (count($a) == 0)
+								$c->$m();
+							else
+								call_user_func_array(array($c, $m), $a);
+						}
 
-						$handler = new JXP_Session($client, 'JINXUP_', $ttl);
+						if (isset($stack['action']['init']['end']))
+							$this->_run($stack['action']['init']['end']);
+
+					} else {
+
+						echo '404 error, class ' . $c . ' does not exist.';
+					}
+
+					if (isset($stack['controller']['init']['end']))
+						$this->_run($stack['controller']['init']['end']);
+
+					if (!empty($config))
+					{
+						if (isset($config['init']))
+						{
+							if (isset($config['init']['end']))
+								$this->_run($config['init']['end']);
+						}
 					}
 				}
+			}
 
-				if (!is_null($handler))
+			return $this;
+		}
+
+		public function config($config)
+		{
+			JXP_Config::load($config);
+
+			return $this;
+		}
+
+		private function _run($config)
+		{
+			if (!empty($config))
+			{
+				$disabled = false;
+
+				if (isset($config['disabled']) && ($config['disabled'] == 1 || (string)$config['disabled'] == 'true'))
+					$disabled = true;
+
+				if ($disabled == false)
 				{
-					session_set_save_handler(
-						array($handler, 'open'),
-						array($handler, 'close'),
-						array($handler, 'read'),
-						array($handler, 'write'),
-						array($handler, 'destroy'),
-						array($handler, 'gc')
-					);
+					foreach ($config as $k => $v)
+					{
+						if ($k == 'redirect' && !empty($v))
+						{
+							header('Location: ' . $v);
+
+							exit;
+						}
+
+						if ($k == 'route' || $k == 'call')
+						{
+                            if (!isset($v[0])) {
+
+                                $v = [$v];
+                            }
+
+                            foreach ($v as $_k => $_v) {
+
+                                $namespace = $this->_namespace;
+
+                                if ($k == 'route' && !empty($_v))
+                                {
+                                    $route = $this->_route($_v);
+
+                                    $c = $route['controller']['translated'];
+                                    $m = $route['action']['translated'];
+                                    $a = $route['params'];
+                                }
+
+                                if ($k == 'call')
+                                {
+                                    $namespace = isset($v['namespace']) ? $_v['namespace'] : $this->_namespace;
+
+                                    $c = isset($_v['class']) && !empty($_v['class']) ? $_v['class'] : null;
+                                    $m = isset($_v['action']) && !empty($_v['action']) ? $_v['action'] : null;
+                                    $a = isset($_v['arguments']) && !empty($_v['arguments']) ? $_v['arguments'] : [];
+                                }
+
+                                if (!is_null($c))
+                                {
+                                    $c = $namespace . $c;
+
+                                    if (class_exists($c))
+                                    {
+                                        $j = method_exists($c, $m);
+                                        $i = is_callable(array($c, $m));
+                                        $n = method_exists($c, '__call');
+                                        $x = is_callable(array($c, '__call'));
+
+                                        if (($j && $i) || ($n && $x))
+                                        {
+                                            $_reflect = new ReflectionMethod($c . '::' . $m);
+
+                                            if ($_reflect->isStatic()) {
+
+                                                if (count($a) == 3)
+                                                    $c::$m($a[0], $a[1], $a[2]);
+                                                else if (count($a) == 2)
+                                                    $c::$m($a[0], $a[1]);
+                                                else if (count($a) == 1)
+                                                    $c::$m($a[0]);
+                                                else if (count($a) == 0)
+                                                    $c::$m();
+                                                else
+                                                    call_user_func_array(array($c, $m), $a);
+
+                                            } else {
+
+                                                $c = new $c();
+
+                                                if (count($a) == 3)
+                                                    $c->$m($a[0], $a[1], $a[2]);
+                                                else if (count($a) == 2)
+                                                    $c->$m($a[0], $a[1]);
+                                                else if (count($a) == 1)
+                                                    $c->$m($a[0]);
+                                                else if (count($a) == 0)
+                                                    $c->$m();
+                                                else
+                                                    call_user_func_array(array($c, $m), $a);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+						}
+
+						if ($k == 'cmd')
+							$this->_cmd($v);
+					}
 				}
 			}
-
-			session_start();
 		}
 
-		private static function _prepareURI($uri = null)
+		private function _cmd($cmd)
 		{
-			self::$_routes['params'] = explode('/', is_null($uri) ? JXP_Routes::getURI() : $uri);
+			if (!is_array($cmd))
+				$cmd = array($cmd);
 
-			return self::$_routes['params'];
+			foreach ($cmd as $k => $v)
+				eval($v);
 		}
 
-		private static function _runRoutes()
+		private function _route($controller, $action = null, $arguments = [])
 		{
-			$params = array();
-
-			foreach (self::$_routes['params'] as $key => $value)
+			if (is_array($action))
 			{
-				if (!is_null($value) || strlen($value) > 0)
-					$params[] = $value;
+				$arguments = $action;
+				$action    = 'index';
 			}
 
-			if (isset($params[0]) && strtolower($params[0]) == 'assets')
-			{
-				$file = getcwd() . DS . implode($params, '/');
+			$controller = preg_replace('/\\.[^.\\s]{3,4}$/', '', $controller);
 
-				if (is_file($file))
+			if (is_null($action) && empty($arguments))
+				$route = '/' . ltrim($controller, '/');
+			else
+				$route    = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
+
+			$_route   = explode('/', $route);
+			$params   = array_values(array_filter($_route));
+			$_project = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
+
+			if ($params[0] == $_project)
+				array_shift($params);
+
+			if (!empty($params) && JXP_App::exists($params[0]))
+			{
+				$config = JXP_Config::getSettings();
+
+				if (isset($config['detect-app-from-url']) && (string)$config['detect-app-from-url'] == true)
 				{
-					header('Content-type: ' . JXP_File::detectMime($file));
+					$this->app($params[0]);
 
-					include_once($file);
-
-				} else {
-
-					self::_exitWith('file', __LINE__);
+					array_shift($params);
 				}
-
-			} else {
-
-				$prefix = str_replace($_SERVER['DOCUMENT_ROOT'], '', getcwd());
-				$prefix = explode('/', $prefix);
-
-				JXP_Routes::$prefix = trim($prefix[0], DS);
-
-				self::_prepareRoutes();
-				self::_loadApplication();
-			}
-		}
-
-		private static function _prepareRoutes($params = array())
-		{
-			$_params = array_filter(empty($params) ? self::$_routes['params'] : $params);
-
-			foreach ($_params as $key => $value)
-			{
-				$value = preg_replace('/\.(php|php5|html|htm|shtml|jhtml)/im', '', $value);
-
-				if (!is_null($value) || strlen($value) > 0)
-					$params[] = $value;
 			}
 
 			if (!empty($params))
 			{
-				if ($params[0] == JXP_Routes::$prefix)
-					array_shift($params);
-
-				if ($params[0] != '-' && !empty($params))
+				if ($params[0] != '-')
 				{
 					$prefix = is_numeric($params[0][0]) ? 'n' : null;
 					$prefix = $params[0][0] == '_' ? 'u' : $prefix;
@@ -252,20 +565,20 @@
 
 					$controller = array_shift($params);
 
-					self::$_routes['controller']['raw'] = $controller;
-
-					$controller = $prefix . str_replace('-', '_', $controller) . '_Controller';
-
-					self::$_routes['controller']['translated'] = $controller;
+					$_r['controller']['raw']        = $controller;
+					$_r['controller']['translated'] = $prefix . str_replace('-', '_', $controller) . '_Controller';
 
 				} else {
 
 					array_shift($params);
+
+					$_r['controller']['raw']        = 'index';
+					$_r['controller']['translated'] = 'Index_Controller';
 				}
 
 			} else {
 
-				self::$_routes['controller'] = array('raw' => 'index', 'translated' => 'Index_Controller');
+				$_r['controller'] = array('raw' => 'index', 'translated' => 'Index_Controller');
 			}
 
 			if (!empty($params))
@@ -278,412 +591,24 @@
 
 					$action = array_shift($params);
 
-					self::$_routes['action']['raw'] = $action;
-
-					$action = $prefix . str_replace('-', '_', $action) . 'Action';
-
-					self::$_routes['action']['translated'] = $action;
+					$_r['action']['raw']        = $action;
+					$_r['action']['translated'] = $prefix . str_replace('-', '_', $action) . 'Action';
 
 				} else {
 
 					array_shift($params);
+
+					$_r['action']['raw']        = 'index';
+					$_r['action']['translated'] = 'indexAction';
 				}
 
 			} else {
 
-				self::$_routes['action'] = array('raw' => 'index', 'translated' => 'indexAction');
+				$_r['action'] = array('raw' => 'index', 'translated' => 'indexAction');
 			}
 
-			self::$_routes['params'] = $params;
+			$_r['params'] = $params;
 
-			JXP_Routes::setRoutes(self::$_routes);
-		}
-
-		private static function _findApplications()
-		{
-			self::$_apps = JXP_Directory::scan(getcwd() . DS . JXP_Application::getDirectories('applications'));
-		}
-
-		private static function _setApplication($forceApp = null)
-		{
-			$activeApp = null;
-			$app       = array();
-			$config    = self::$_config;
-			$dirs      = JXP_Application::getDirectories();
-
-			if (isset($config['directories']))
-			{
-				foreach ($config['directories'] as $key => $value)
-				{
-					if (is_dir(getcwd() . DS . $value))
-						JXP_Application::setDirectory($key, $value);
-				}
-			}
-
-			if (empty(self::$_apps))
-			{
-				self::_exitWith('welcome', __LINE__);
-
-			} else {
-
-				if (count(self::$_apps) == 1)
-				{
-					$app       = array_keys(self::$_apps);
-					$activeApp = $app[0];
-
-				} else {
-
-					if (isset($config['domains']))
-					{
-						// TODO: set activeApp from domain settings
-
-						unset(self::$_config['domains']);
-
-					} else {
-
-						if (isset($config['active']) && !empty($config['active']))
-						{
-							if (array_key_exists($config['active'], self::$_apps))
-								$activeApp = $config['active'];
-							else
-								self::_exitWith('application', __LINE__);
-
-							unset(self::$_config['active']);
-						}
-
-						self::$_routes['params'] = array_values(array_filter(self::$_routes['params']));
-
-						if (!empty(self::$_routes['params']) && array_key_exists(self::$_routes['params'][0], self::$_apps))
-							$activeApp = array_shift(self::$_routes['params']);
-
-						if (!is_null($forceApp))
-						{
-							chdir(dirname(dirname(self::$_app['path'])));
-
-							$activeApp = $forceApp;
-						}
-
-						if (is_null($activeApp))
-							self::_exitWith('active', __LINE__);
-					}
-				}
-
-				$app['path']         = getcwd() . DS . $dirs['applications'] . DS . $activeApp;
-				self::$_app          = $app;
-				self::$_loadedApps[] = $activeApp;
-
-				JXP_Application::setActive($activeApp);
-				JXP_Application::setApps(self::$_apps);
-
-				if (self::$_exit == false)
-				{
-					if (is_dir($app['path']))
-					{
-						if (self::_checkAppIntegrity($app['path']))
-						{
-							chdir($app['path']);
-
-							self::$_app['paths'] = JXP_Directory::scan(getcwd());
-
-							JXP_Application::setApp(self::$_app);
-
-							if (isset(self::$_app['paths']['views']))
-								JXP_View::setPath('views', self::$_app['paths']['views']);
-
-							if (isset(self::$_app['paths']['config']))
-								self::$_config = JXP_Config::translate(JXP_Config::loadFromPath(self::$_app['paths']['config']));
-
-							JXP_Autoloader::peekIn(dirname(getcwd()) . DS . $activeApp);
-
-							if (isset(self::$_config['environment']))
-							{
-								if (preg_match('/(dev)/mi', self::$_config['environment']))
-									JXP_Error::showErrors(true);
-
-								unset(self::$_config['environment']);
-							}
-
-						} else {
-
-							self::_exitWith('integrity', __LINE__);
-						}
-
-					} else {
-
-						self::_exitWith('page', __LINE__);
-					}
-				}
-			}
-		}
-
-		private static function _loadApplication()
-		{
-			if (self::$_exit == false)
-			{
-				$return       = null;
-				$bootstrap    = null;
-				$routes       = self::$_routes;
-				$namespace    = null;
-				$willThrow404 = true;
-
-				JXP_Application::setWillThrow404($willThrow404);
-
-				if (!is_null(self::$_namespace))
-					$namespace = '\\' . self::$_namespace . '\\';
-
-				if (class_exists($namespace . 'bootstrap'))
-				{
-					$bootstrap = $namespace . 'bootstrap';
-					$bootstrap = new $bootstrap();
-
-					if (method_exists($bootstrap, 'beforeLaunch') && is_callable([$bootstrap, 'beforeLaunch']))
-						$bootstrap->beforeLaunch();
-				}
-
-				if (class_exists($namespace . $routes['controller']['translated'])) {
-					$willThrow404 = false;
-
-				} else if (class_exists($routes['controller']['translated'])) {
-
-					$willThrow404 = false;
-					$namespace    = null;
-				}
-
-				if ($willThrow404 === false)
-				{
-					$c = $namespace . $routes['controller']['translated'];
-					$c = new $c();
-					$p = $routes['params'];
-					$j = method_exists($c, $routes['action']['translated']);
-					$i = is_callable(array($c, $routes['action']['translated']));
-					$n = method_exists($c, '__call');
-					$x = is_callable(array($c, '__call'));
-
-					if (($j && $i) || ($n && $x))
-					{
-						if (count($p) == 3)
-							$c->{$routes['action']['translated']}($p[0], $p[1], $p[2]);
-						else if (count($p) == 2)
-							$c->{$routes['action']['translated']}($p[0], $p[1]);
-						else if (count($p) == 1)
-							$c->{$routes['action']['translated']}($p[0]);
-						else if (count($p) == 0)
-							$c->{$routes['action']['translated']}();
-						else
-							call_user_func_array(array($c, $routes['action']['translated']), $p);
-
-					} else {
-
-						self::_exitWith('page', __LINE__);
-					}
-
-				} else {
-
-					self::_exitWith('page', __LINE__);
-				}
-
-				$u = method_exists($bootstrap, 'afterLaunch');
-				$p = is_callable(array($bootstrap, 'afterLaunch'));
-
-				if (!is_null($bootstrap) && $u && $p && self::$_appFlag != 'loading')
-					$bootstrap->afterLaunch();
-
-				unset($c);
-				unset($j);
-				unset($i);
-				unset($n);
-				unset($x);
-				unset($u);
-				unset($p);
-				unset($routes);
-				unset($_bootstrap);
-			}
-		}
-
-		public static function config()
-		{
-			return self::$_config;
-		}
-
-		protected static function _exitWith($errorType = null, $line = 0)
-		{
-			self::$_exit = true;
-
-			chdir(dirname(__DIR__));
-
-			$errorCode = 404;
-			$errorTpl  = null;
-			$errorPath = getcwd() . DS . 'views';
-
-			ob_start();
-
-			header('HTTP/1.0 404 Not Found');
-
-			$errorTpl = $errorType . '.tpl';
-
-			if ($errorCode == 404 || $errorCode == 500)
-			{
-				$issetError = isset(self::$_config['errors']) ? 'errors' : 'error';
-
-				if (!empty(self::$_config[$issetError]) && isset(self::$_config[$issetError]['catch']))
-				{
-					$catch = self::$_config[$issetError]['catch'];
-
-					if (isset(self::$_app['paths']['views']))
-					{
-						$errorPath = rtrim(self::$_app['paths']['views'], '/');
-
-						foreach ($catch as $key => $value)
-						{
-							$_c = $catch[$key];
-
-							if (in_array($key, ['*', 'all', $errorCode]))
-							{
-								if (is_array($_c))
-								{
-									$errorKeys  = array_keys($_c);
-									$breakError = false;
-
-									foreach ($errorKeys as $k)
-									{
-										switch ($k)
-										{
-											case 'redirect':
-											case 'location':
-
-												$location = isset($_c['redirect']) ? $_c['redirect'] : $_c['location'];
-
-												if (strlen($location) > 0)
-												{
-													$currentRoutes = self::$_routes;
-
-													self::_prepareURI($location);
-													self::_prepareRoutes();
-
-													$locationRoutes = self::$_routes;
-													$breakError     = true;
-
-													$c1 = $currentRoutes['controller']['translated'];
-													$c2 = $locationRoutes['controller']['translated'];
-													$a1 = $currentRoutes['action']['translated'];
-													$a2 = $locationRoutes['action']['translated'];
-
-													if ($c1 != $c2 && $a1 != $a2)
-														header('Location: ' . $location);
-
-													break;
-												}
-
-											case 'file':
-
-												$file = $_SERVER['DOCUMENT_ROOT'] . DS . ltrim($_c['file'], '/');
-
-												if (strlen($file) > 0 && file_exists($file))
-												{
-													require_once $file;
-
-													self::stop();
-
-													break;
-												}
-
-											case 'load':
-
-												$readyToLoad = false;
-
-												if (!is_array($_c[$k]))
-												{
-													if (strlen($_c{$k}) > 0)
-													{
-														$readyToLoad = true;
-														$errorType   = trim($_c[$k], '/');
-													}
-
-												} else {
-
-													if (isset($_c[$k]['controller']) && strlen($_c[$k]['controller']) > 0)
-													{
-														$readyToLoad = true;
-
-														JXP_Routes::setController($_c[$k]['controller'] . '_Controller');
-
-														if (isset($_c[$k]['action']) && strlen($_c[$k]['action']) > 0)
-														{
-															$readyToLoad = true;
-
-															JXP_Routes::setAction($_c[$k]['action'] . 'Action');
-
-															if (isset($_c[$k]['params']) && count($_c[$k]['params']) > 0)
-																JXP_Routes::addParams($_c[$k]['params']);
-
-														} else {
-
-															JXP_Routes::setAction('indexAction');
-														}
-
-														// TODO: load controller / action / params
-													}
-												}
-
-												if ($readyToLoad === true)
-												{
-													$breakError = true;
-
-													break;
-												}
-
-											default:
-
-												$breakError = true;
-
-												break;
-										}
-
-										if ($breakError === true)
-											break;
-									}
-
-								} else {
-
-									$errorTpl = trim($_c, '/');
-								}
-							}
-						}
-					}
-
-				} else {
-
-					$errorPath = getcwd() . DS . 'views';
-				}
-
-				if (!file_exists($errorPath . '/' . $errorTpl) || $errorType == strtolower('default'))
-				{
-					$errorPath = getcwd() . DS . 'views';
-					$errorTpl  = $errorType . '.tpl';
-				}
-			}
-
-			if (is_dir($errorPath))
-			{
-				JXP_Application::setApps(self::$_apps);
-				JXP_View::setPath('views', $errorPath);
-
-				JXP_View::render($errorTpl);
-			}
-
-			self::_stop();
-		}
-
-		private static function _checkAppIntegrity($path)
-		{
-			$return = false;
-
-			if (!is_null($path))
-			{
-				foreach (['controllers'] as $k)
-					$return = (!is_dir($path . DS . $k)) ? false : true;
-			}
-
-			return $return;
+			return $_r;
 		}
 	}

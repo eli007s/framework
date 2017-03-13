@@ -2,117 +2,99 @@
 
 	class JXP_Config
 	{
-		private static $_config = array();
-		private static $_regEx  = '@(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|((?<!:)//.*)|[\t\r\n]@i';
+		private static $_config    = array();
+		private static $_namespace = '\\';
 
-		public static function get($key = null)
+		public static function load($config = '')
 		{
-			$config = Jinxup::config();
+		    if ($config != '') {
 
-			return is_null($config) ? $config : isset($config[$key]) ? $config[$key] : null;
+		        if (file_exists($config)) {
+
+                    $contents = json_decode(self::_cleanCommentsFromJson($config), true);
+
+                    if (is_array($contents))
+                        self::$_config = self::_array_merge_recursive_distinct(self::$_config, $contents);
+                }
+            }
+
+			return self::_translate(self::$_config);
 		}
 
-		public static function loadFromPath($path)
+		private static function _array_merge_recursive_distinct(array &$array1, array &$array2)
+        {
+            $merged = $array1;
+
+            foreach ($array2 as $key => &$value)
+            {
+                if (is_array($value) && isset($merged[$key]) && is_array($merged[$key]))
+                {
+                    if ($key == 'database') {
+
+                        foreach ($value as $k => $v) {
+
+                            $merged[$key] = self::_array_merge_recursive_distinct($merged[$key], $v);
+                        }
+
+                    } else {
+
+                        $merged[$key] = self::_array_merge_recursive_distinct($merged[$key], $value);
+                    }
+
+                } else {
+
+                    $merged[$key] = $value;
+                }
+            }
+
+            return $merged;
+        }
+
+        public static function get($key = '') {
+
+            return isset(self::$_config[$key]) ? self::$_config[$key] : self::$_config;
+        }
+
+		public static function setNamespace($ns)
 		{
-			$return = null;
-
-			foreach (JXP_Directory::scan($path, '\.(tell|json|php)') as $config)
-			{
-				$contents   = file_get_contents($config);
-				$configTell = preg_replace(self::$_regEx, '', $contents);
-				$return     = json_decode($configTell, true);
-			}
-
-			return $return;
+			self::$_namespace = '\\' . ltrim($ns, '\\');
 		}
 
-		public static function loadFromFile($file)
+		public static function getNamespace()
 		{
-			$contents   = file_get_contents($file);
-			$configTell = preg_replace(self::$_regEx, '', $contents);
-			$return     = json_decode($configTell, true);
-
-			return $return;
+			return self::$_namespace == '\\' ? self::$_namespace : self::$_namespace . '\\';
 		}
 
-		public static function translate($config)
+		private static function _cleanCommentsFromJson($file)
 		{
-			if (!empty($config))
-			{
-				foreach ($config as $a => $b)
-				{
-					if ($a != 'settings')
-					{
-						if (is_array($b))
-						{
-							foreach ($b as $c => $d)
-							{
-								if (isset($d['use']))
-								{
-									if (isset(self::$_config[$a][$c]))
-									{
-										if (isset($config['settings'][$a][$d['use']]))
-											self::$_config[$a][$c] = $config['settings'][$a][$d['use']];
+			return preg_replace('@(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|((?<!:)//.*)|[\t\r\n]@i', '', file_get_contents($file));
+		}
 
-									} else {
+		private static function _translate($config)
+		{
+            foreach (self::$_config as $k => $v)
+            {
+                if (isset($v['import']))
+                {
+                    if (isset(self::$_config['settings']['setting'][$v['import']]))
+                    {
+                        self::$_config[$k];
+                    }
+                }
+            }
 
-										self::$_config[$a][$c] = $config[$a][$c];
-									}
+			return $config;
+		}
 
-								} else {
+		private static function _array_change_key_case_recursive($arr, $case = CASE_LOWER)
+		{
+			return array_map(function($item) use($case) {
 
-									if (isset(self::$_config[$a]))
-									{
-										self::$_config[$a] = array_merge(
-											self::$_config[$a],
-											$config[$a]
-										);
+				if (is_array($item))
+					$item = self::_array_change_key_case_recursive($item, $case);
 
-									} else {
+				return $item;
 
-										self::$_config[$a] = $config[$a];
-									}
-								}
-							}
-
-						} else {
-
-							if ($b == 'use')
-							{
-								if (isset($config['settings'][$a][$config[$a][$b]]))
-								{
-									if (isset(self::$_config[$a][$config[$a][$b]]))
-									{
-										self::$_config[$a][$config[$a][$b]] = array_merge(
-											self::$_config[$a][$config[$a][$b]],
-											$config['settings'][$a][$config[$a][$b]]
-										);
-
-									} else {
-
-										self::$_config[$a][$config[$a][$b]] = $config['settings'][$a][$config[$a][$b]];
-									}
-								}
-
-							} else {
-
-								if (isset(self::$_config[$a]))
-								{
-									self::$_config[$a] = array_merge(
-										self::$_config[$a],
-										$config[$a]
-									);
-
-								} else {
-
-									self::$_config[$a] = $config[$a];
-								}
-							}
-						}
-					}
-				}
-			}
-
-			return self::$_config;
+			}, array_change_key_case($arr, $case));
 		}
 	}

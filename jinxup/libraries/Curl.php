@@ -44,16 +44,28 @@
 			return self::$_init;
 		}
 
-		public static function withPost($post = array())
+		public static function withPost($post = array(), $options = [])
 		{
-			if (empty($post))
-			{
-				if (!is_string($post))
-					$post = $_POST;
-			}
+		    $postType    = 'array';
+            $inheritPost = false;
+            $buildQuery  = true;
+            $post        = JXP_Format::trimSpaces($post);
 
-			$post = JXP_Format::trimSpaces($post);
-			$post = is_array($post) ? http_build_query($post) : urlencode($post);
+		    if (isset($options['postType'])) {
+
+                $postType = strolower($options['type']);
+            }
+
+            // Process post from input stream
+            if (isset($options['inheritPost']) && $options['inheritPost'] == true) {
+
+                $inheritPost = true;
+            }
+
+            if ($buildQuery == true) {
+
+                $post = is_array($post) ? http_build_query($post) : urlencode($post);
+            }
 
 			self::$_opt['CURLOPT_POST']       = 1;
 			self::$_opt['CURLOPT_POSTFIELDS'] = $post;

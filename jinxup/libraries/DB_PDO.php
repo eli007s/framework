@@ -153,7 +153,7 @@
 
 			if (!empty($this->_con))
 			{
-				//$this->_con->beginTransaction();
+				$this->_con->beginTransaction();
 
 				try
 				{
@@ -185,7 +185,7 @@
 					
 						$endTime = microtime(true);
 
-						//$this->_con->commit();
+						$this->_con->commit();
 
 					} else {
 
@@ -198,15 +198,14 @@
 					$debug   = debug_backtrace();
 
 					$this->_log[$hash]['error'] = array(
-						'time'    => $endTime - $starTime,
 						'file'    => $debug[2]['file'],
 						'line'    => $debug[2]['line'],
 						'message' => $e->getMessage()
 					);
 
-					$this->_errorLog($this->_log[$hash]);
+					$this->_errorLog($this->_log[$hash]['error']);
 
-					//$this->_con->rollBack();
+					$this->_con->rollBack();
 				}
 
 			}  else {
@@ -228,101 +227,7 @@
 
 		private function _errorLog($log)
 		{
-			$config = JXP_Config::get('error');
-
-			if (isset($config['database']))
-			{
-				$dbError = $config['database'];
-
-				if (isset($dbError['using']))
-				{
-					$using = $dbError['using'];
-
-					switch (strtolower($using))
-					{
-						case 'email':
-
-							if (isset($dbError[$using]['transport']))
-							{
-								$transport = $dbError[$using]['transport'];
-
-								if (isset($transport['type']))
-								{
-									$type = $transport['type'];
-
-									if (strtolower($type) == 'ses')
-									{
-										if (isset($transport['credentials']))
-										{
-											$email = $dbError[$using];
-
-											if ((isset($email['to']) && !empty($email['to'])) && isset($email['from']) && !empty($email['from']))
-											{
-												$ses = JXP_Vendor::load('aws')->using($transport['credentials'])->get('Ses');
-
-												$subject = null;
-
-												if (isset($email['subject']) && !empty($email['subject']))
-													$subject = $email['subject'];
-
-												$replyTo    = $email['from'];
-												$returnPath = $email['from'];
-
-												if ((isset($email['replyTo']) && !empty($email['replyTo'])))
-													$returnPath = $email['replyTo'];
-
-												if ((isset($email['returnPath']) && !empty($email['returnPath'])))
-													$returnPath = $email['returnPath'];
-
-												try
-												{
-													ob_start();
-
-													echo '<pre>' . print_r($log, true) . '</pre>';
-
-													$body = ob_get_contents();
-
-													ob_end_clean();
-
-													$ses->sendEmail([
-														'Source'      => $email['from'],
-														'Destination' => [
-															'ToAddresses' => [$email['to']]
-														],
-														'Message' => [
-															'Subject' => [
-																'Data'    => $subject,
-																'Charset' => 'UTF-8',
-															],
-															'Body' => [
-																'Html' => [
-																	'Data'    => $body,
-																	'Charset' => 'UTF-8',
-																],
-															],
-														],
-														'ReplyToAddresses' => [$replyTo],
-														'ReturnPath'       => $returnPath
-													]);
-
-												} catch (Aws\Ses\Exception\SesException $e) {
-
-													echo $e->getMessage();
-												}
-											}
-										}
-									}
-								}
-							}
-
-							break;
-					}
-				}
-
-			} else {
-
-				echo '<pre>', print_r($log, true), '</pre>';
-			}
+			echo '<pre>', print_r($log, true), '</pre>';
 		}
 
 		private function _prepareParameters($stmt, $bind, $params, $hash)
