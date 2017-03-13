@@ -219,7 +219,17 @@
 
                 if (strpos($this->_route['string'], '*') !== false) {
 
-                    if (preg_match('#(' . str_replace('*', '.*', $this->_route['string']) . ')#i', $_SERVER['REQUEST_URI'])) {
+                    $pattern = '#' . str_replace('*', '(.*)', $this->_route['string']) . '#i';
+
+                    if (preg_match($pattern, $_SERVER['REQUEST_URI'])) {
+
+                        $_temp = '/' . $controller . '/' . $action . '/' . implode('/', $arguments);
+
+                        $_string = explode('/', preg_replace($pattern, $_temp, $_SERVER['REQUEST_URI']));
+
+                        $controller = array_shift($_string);
+                        $action     = array_shift($_string);
+                        $arguments  = $_string;
 
                         $this->_routed = true;
                     }
