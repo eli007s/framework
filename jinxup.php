@@ -22,11 +22,14 @@
 
 	if (is_file($controller))
 	{
+		if (session_id() == '')
+			session_start();
+
 		require_once($controller);
 
-		$jxp = new Jinxup();
+		$jinxup = new Jinxup();
 
-		$jxp->init();
+        $jinxup->init();
 
 	} else {
 
